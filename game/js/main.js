@@ -9,9 +9,16 @@
   // paint: units of paint per colour of the current picture (1 picture = 1 palette)
   // stars, ach, stats: sugar stars and achievements (js/meta.js), added in save v2
   // owned: patterns bought in the shop; pats: chosen pattern per colour for each picture id (save v3)
-  let S = { v: 3, level: 0, pic: 0, paint: [], painted: [], done: [], sound: true, tut: {}, stars: 0, ach: [], stats: {}, owned: [], pats: {} };
+  // shades: replacement shades bought; tints: chosen shade id (or null) per colour for each picture id (save v4)
+  let S = { v: 4, level: 0, pic: 0, paint: [], painted: [], done: [], sound: true, tut: {}, stars: 0, ach: [], stats: {}, owned: [], pats: {}, shades: [], tints: {} };
   const save = () => SDK.save(SAVE_KEY, S);
-  const picture = () => PICTURES[Math.min(S.pic, PICTURES.length - 1)];
+  // a picture with the player's shades applied: palette = colours now, base = the picture's own colours
+  function dress(p) {
+    const mine = S.tints[p.id] || [], colours = p.palette.slice();
+    p.palette.forEach((_, c) => { const sh = Shades.get(mine[c]); if (sh && S.shades.includes(sh.id) && Shades.fits(sh, p.palette, colours, c)) colours[c] = sh.hex; });
+    return Object.assign({}, p, { palette: colours, base: p.palette });
+  }
+  const picture = () => dress(PICTURES[Math.min(S.pic, PICTURES.length - 1)]);
   const allDone = () => S.pic >= PICTURES.length;
   let sel = 0, screen = 'paint', overlayOpen = false;
   // patterns of a picture: the player's choice where valid, otherwise the starter set; never two colours with one pattern
@@ -174,8 +181,8 @@
   // ───── gallery ─────
   function renderGallery() {
     const b = $('board'); b.innerHTML = '';
-    PICTURES.forEach((p, i) => {
-      const f = document.createElement('div');
+    PICTURES.forEach((p0, i) => {
+      const f = document.createElement('div'), p = dress(p0);
       if (S.done.includes(p.id)) { f.className = 'frame'; f.innerHTML = PaintScene.markup(p, 'all', { patterns: patternsOf(p) }) + `<span class="cap">${p.name[I18N.lang()] || p.name.en}</span>`; }
       else if (i === S.pic) { f.className = 'frame'; f.innerHTML = PaintScene.markup(p, new Set(S.painted), { patterns: patternsOf(p) }) + `<span class="cap progress">${t('progress', { a: S.painted.length, b: p.regions.length })}</span>`; }
       else { f.className = 'frame locked'; f.textContent = '?'; }
@@ -204,6 +211,17 @@
       h += `<h2>${t('shopPic')}</h2><p class="shop-tip">${t('shopPick')}</p><div class="shop-paints">` + p.palette.map((color, c) =>
         `<button class="shop-paint${c === shopSel ? ' sel' : ''}" data-c="${c}" aria-label="${c + 1}">${jarSVG(color, c + 1, 0.9, cur[c])}</button>`).join('') + '</div>';
     }
+    if (cur) {
+      // shades: the paint's own colour and the shades of its family; a shade too close to another paint is not offered
+      const base = p.base[shopSel], mine = (S.tints[p.id] || [])[shopSel] || null;
+      h += `<h2>${t('shopShades')}</h2><div class="shop-grid">` + [null, ...Shades.family(base)].map(sh => {
+        const id = sh ? sh.id : '', hex = sh ? sh.hex : base, fits = !sh || Shades.fits(sh, p.base, p.palette, shopSel);
+        const on = sh ? p.palette[shopSel] === sh.hex : p.palette[shopSel] === base;
+        const state = on ? 'on' : !fits ? 'used' : !sh || S.shades.includes(id) ? 'own' : 'buy';
+        const tag = state === 'on' ? CHECK : state === 'used' ? `<small class="clash">${t('shadeClash')}</small>` : state === 'buy' ? `${STAR}${sh.price}` : '';
+        return `<button class="pat shade ${state}" data-shade="${id}"${state === 'used' ? ' disabled' : ''}>${chip(hex)}<span class="pat-name">${t(sh ? 'shade_' + id : 'shadeOwn')}</span><span class="pat-tag">${tag}</span></button>`;
+      }).join('') + '</div>';
+    }
     h += `<h2>${t('shopPatterns')}</h2><div class="shop-grid">`;
     const color = cur ? p.palette[shopSel] : '#e9cba7';
     for (const pt of Patterns.list) {
@@ -214,7 +232,8 @@
     }
     box.innerHTML = h + '</div>';
     box.querySelectorAll('.shop-paint').forEach(b => b.addEventListener('click', () => { Sound.pick(); shopSel = +b.dataset.c; renderShop(); }));
-    box.querySelectorAll('.pat').forEach(b => b.addEventListener('click', () => pickPattern(b.dataset.id)));
+    box.querySelectorAll('.pat:not(.shade)').forEach(b => b.addEventListener('click', () => pickPattern(b.dataset.id)));
+    box.querySelectorAll('.pat.shade').forEach(b => b.addEventListener('click', () => pickShade(b.dataset.shade)));
   }
   function pickPattern(id) {
     const pt = Patterns.get(id);
@@ -227,6 +246,24 @@
     }
     if (allDone()) return;
     Sound.pick(); setPattern(id); save(); renderShop();
+  }
+  const chip = hex => `<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="2" y="2" width="44" height="44" rx="10" fill="${hex}"/></svg>`;
+  // id '' = back to the picture's own colour
+  function pickShade(id) {
+    const sh = Shades.get(id);
+    if (sh && !S.shades.includes(id)) {
+      if (S.stars < sh.price) { Sound.error(); note(`<h2>${t('notEnough')}</h2><p>${t('notEnoughText', { n: sh.price - S.stars })}</p>`, [[t('ok'), closeNote]]); return; }
+      Sound.pick();
+      note(`<h2>${t('shade_' + id)}</h2><div class="buy-swatch">${chip(sh.hex)}</div><p>${t('buyShadeQ', { n: sh.price })}</p>`,
+        [[t('buy'), () => { closeNote(); const got = Meta.buy(sh.price, 'shade'); S.shades.push(id); setShade(id); save(); Sound.cork(); renderShop(); toasts(got.concat(Meta.shadeUsed())); }], [t('notNow'), closeNote]]);
+      return;
+    }
+    Sound.pick(); setShade(id); save(); renderShop();
+    if (sh) toasts(Meta.shadeUsed());
+  }
+  function setShade(id) {
+    const p = picture(), mine = (S.tints[p.id] || p.base.map(() => null)).slice();
+    mine[shopSel] = id || null; S.tints[p.id] = mine;      // the paint screen redraws when the shop closes
   }
   function setPattern(id) {
     const p = picture(), cur = patternsOf(p);
@@ -299,9 +336,10 @@
     const cfg = await SDK.config();
     I18N.setLocale(cfg.locale); I18N.apply();
     const saved = await SDK.load(SAVE_KEY);
-    // v1 -> v2: Meta.init adds stars, achievements, stats; v2 -> v3: owned patterns and picture patterns (empty = defaults)
-    if (saved && [1, 2, 3].includes(saved.v)) S = Object.assign(S, saved, { v: 3 });
-    S.owned = S.owned || []; S.pats = S.pats || {};
+    // v1 -> v2: Meta.init adds stars, achievements, stats; v2 -> v3: owned patterns and picture patterns (empty = defaults);
+    // v3 -> v4: shades and picture shades (empty = the picture's own colours)
+    if (saved && [1, 2, 3, 4].includes(saved.v)) S = Object.assign(S, saved, { v: 4 });
+    S.owned = S.owned || []; S.pats = S.pats || {}; S.shades = S.shades || []; S.tints = S.tints || {};
     S.tut = S.tut || {};
     Meta.init(S);                 // achievements already earned by an old save are granted quietly
     Sound.setOn(S.sound); $('btn-sound').classList.toggle('off', !S.sound);

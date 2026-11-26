@@ -12,8 +12,8 @@
     { id: 'flasks100', stars: 20, test: s => s.flasks >= 100 },
     { id: 'cells1000', stars: 30, test: s => s.cells >= 1000 },
     { id: 'noWaste', stars: 20, test: s => s.noWaste >= 1 },
-    { id: 'patterns5', stars: 15, test: s => (s.patternsBought || 0) >= 5 },      // shop: not in the game yet
-    { id: 'ownShade', stars: 10, test: s => (s.shadesUsed || 0) >= 1 },           // shop: not in the game yet
+    { id: 'patterns5', stars: 15, test: s => (s.patternsBought || 0) >= 5 },
+    { id: 'ownShade', stars: 10, test: s => (s.shadesUsed || 0) >= 1 },     
     { id: 'stubborn', stars: 10, test: s => s.stubborn >= 1 },
   ];
   const STATS = { wins: 0, flasks: 0, cells: 0, pics: 0, noUndoStreak: 0, thrifty: 0, loseStreak: 0, noWaste: 0, stubborn: 0 };
@@ -63,8 +63,10 @@
     return { lines, total, ach: check() };
   }
 
-  // a pattern was bought in the shop (the caller checked the balance)
-  function buy(price) { S.stars -= price; S.stats.patternsBought = (S.stats.patternsBought || 0) + 1; return check(); }
+  // a pattern (or a shade) was bought in the shop (the caller checked the balance)
+  function buy(price, kind) { S.stars -= price; if (kind !== 'shade') S.stats.patternsBought = (S.stats.patternsBought || 0) + 1; return check(); }
+  // a bought shade was put on a paint
+  function shadeUsed() { S.stats.shadesUsed = (S.stats.shadesUsed || 0) + 1; return check(); }
 
-  window.Meta = { buy, init, levelWon, levelLost, cellPainted, pictureDone, list: () => ACH, stars: () => S.stars, has: id => S.ach.includes(id) };
+  window.Meta = { buy, shadeUsed, init, levelWon, levelLost, cellPainted, pictureDone, list: () => ACH, stars: () => S.stars, has: id => S.ach.includes(id) };
 })();

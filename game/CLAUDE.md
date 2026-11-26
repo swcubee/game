@@ -28,6 +28,7 @@ js/paint.js           picture scene (cells, numbers, hatch highlight, zoom/pan, 
 js/main.js            game flow, save data, paint jars, gallery, overlays, first-time hints
 js/meta.js            sugar stars and achievements (rules; main.js shows them)
 js/patterns.js        paint patterns (tone-on-tone tiles), starter set + shop prices; picture defaults
+js/shades.js          replacement shades (one family = one base paint) and the colour distinctness check
 js/sdk-adapter.js     the only file that talks to QSPlaySDK (safe wrappers + localStorage fallback)
 js/audio.js           synthesised WebAudio sounds (no audio files)
 js/i18n.js            UI strings (ru, en)
@@ -69,7 +70,12 @@ Each paint of a picture has a pattern (js/patterns.js), drawn tone-on-tone on it
 of that colour (the biggest cell plus same-colour cells touching it; paint.js mainCells). Patterns never repeat inside one
 picture. 12 starter patterns are free; 12 more are bought in the shop for sugar stars (shop button in the paint topbar).
 Save v3 adds `owned` (bought pattern ids) and `pats` ({pictureId: [patternId per colour]}); missing choices fall back to
-Patterns.defaults(picture). Shades, gallery frames and free colouring are planned (design/meta-rewards.md).
+Patterns.defaults(picture).
+Shades (js/shades.js) are bought for stars and replace a paint of their family in one picture; numbers stay. A shade is
+offered only if CIE76 delta E >= 12 to every other paint of the picture, for normal vision and simulated protanopia,
+deuteranopia and tritanopia; a shade should differ from its own base by delta E >= 15 (game designer). Save v4 adds
+`shades` (bought ids) and `tints` ({pictureId: [shadeId|null per colour]}); main.js picture() returns the picture with
+shades applied (`palette` = colours now, `base` = the picture's own). Gallery frames and free colouring are planned.
 
 ## Rules for changes
 - Keep it vanilla JS + classic scripts. No frameworks, no bundler, no npm runtime dependencies.
