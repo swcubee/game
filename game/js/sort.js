@@ -225,7 +225,8 @@
     $('btn-undo').classList.remove('urge');
     if (R.solved(st.tubes)) {
       hand(null);
-      finish(1100, cb => cb.onWin(st.level.reward));
+      finish(1100, cb => cb.onWin(st.level.reward, { undos: UNDOS - st.undos, moves: st.moves, limit: st.limit,
+        flasks: st.level.tubes.filter(t => t.length).length }));
       return;
     }
     if (st.moves >= st.limit) {               // out of moves and the paint is not sorted: the level is lost

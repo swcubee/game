@@ -26,6 +26,7 @@ js/rules.js           water sort rules; the pool builder loads this same file, s
 js/sort.js            sort level scene (flasks, pour animation, undo, win/lose)
 js/paint.js           picture scene (cells, numbers, hatch highlight, zoom/pan, "alive" animation)
 js/main.js            game flow, save data, paint jars, gallery, overlays, first-time hints
+js/meta.js            sugar stars and achievements (rules; main.js shows them), save v2
 js/sdk-adapter.js     the only file that talks to QSPlaySDK (safe wrappers + localStorage fallback)
 js/audio.js           synthesised WebAudio sounds (no audio files)
 js/i18n.js            UI strings (ru, en)
@@ -47,7 +48,7 @@ index.html as the page plus css/, js/ and fonts/*.woff2 as files) so the link al
 node tools/build-pictures.mjs      # rebuild js/pictures.js after adding or changing a file in pictures/ (validates it)
 node tools/build-level-pool.mjs    # rebuild js/level-pool.js (only after changing rules or the pool keys; ~10 min)
 python3 tools/playtest.py out/ 390 844 4      # headless play-through on a phone screen, screenshots in out/
-python3 tools/playtest.py out/ 1280 720 14    # all pictures to the end on a desktop screen
+python3 tools/playtest.py out/ 1280 720 99    # every picture to the end on a desktop screen (stops when done)
 python3 tools/playtest.py out/ 1280 720 5 2   # 5 levels starting at picture index 2
 python3 tools/check-labels.py                 # every cell number must sit on its own visible cell
 node tools/build-single.mjs                   # one-file preview in dist/ (not for the portal)

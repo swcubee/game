@@ -1,6 +1,7 @@
 """Automated play-through in headless Chromium.
 Plays sort levels by the shortest solution, paints every cell it can, and saves screenshots.
-Usage: python3 tools/playtest.py OUT_DIR [width height] [levels_to_play] [start_picture_index]
+Usage: python3 tools/playtest.py OUT_DIR [width height] [max_levels_to_play] [start_picture_index]
+Stops early when every picture is finished.
 Levels are built at runtime (js/levelgen.js); a start picture > 0 begins there with a fresh save.
 """
 import sys, os, pathlib
@@ -61,6 +62,8 @@ with sync_playwright() as p:
     pg.wait_for_timeout(900)
     pg.screenshot(path=f'{out}/01-start.png')
     for lv in range(LEVELS):
+        if pg.locator('#btn-brew:disabled').count():          # every picture is finished: nothing left to brew
+            print('all pictures finished after', lv, 'levels'); break
         pg.click('#btn-brew', force=True); pg.wait_for_timeout(500)
         pg.screenshot(path=f'{out}/02-sort-{lv+1}.png')
         pg.locator('#shelves .flask').nth(0).click(force=True); pg.wait_for_timeout(250)
