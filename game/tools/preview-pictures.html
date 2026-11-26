@@ -1,0 +1,14 @@
+<!doctype html><meta charset="utf-8"><body style="margin:0;background:#222;display:flex;flex-wrap:wrap;gap:8px;padding:8px">
+<script src="../js/pictures.js"></script>
+<script>
+const ink='#3a2840';
+for (const p of PICTURES) for (const painted of [true,false]) {
+  let s=`<svg viewBox="0 0 360 480" width="300" height="400" style="background:#f6efe2">`;
+  for (const d of p.decorBack) if(!d.top) s+=`<path d="${d.d}" fill="${d.fill||'none'}"/>`;
+  for (const r of p.regions) s+=`<path d="${r.d}" fill="${painted?p.palette[r.c]:'#f6efe2'}" stroke="${ink}" stroke-width="1.6" stroke-linejoin="round"/>`;
+  for (const d of p.decorBack) if(d.top) s+=`<path d="${d.d}" fill="${d.fill}"/>`;
+  for (const d of p.decorFront) s+=`<path d="${d.d}" fill="${d.fill==='ink'?ink:(d.fill||'none')}" stroke="${d.s?(d.light?'rgba(255,255,255,.55)':ink):'none'}" stroke-width="${d.s||0}" stroke-linecap="round"/>`;
+  if(!painted) for (const r of p.regions) s+=`<text x="${r.nx}" y="${r.ny}" font-size="10" text-anchor="middle" dominant-baseline="middle" fill="#7d6b80" font-family="sans-serif">${r.c+1}</text>`;
+  s+='</svg>'; document.body.insertAdjacentHTML('beforeend',s);
+}
+</script>
