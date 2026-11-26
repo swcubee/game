@@ -14,8 +14,10 @@
   let sel = 0, screen = 'paint', overlayOpen = false;
 
   const need = c => picture().regions.filter(r => r.c === c && !S.painted.includes(r.id)).length;
-  const nextLevel = () => LEVELS[S.level];
-  const canBrew = () => !allDone() && nextLevel() && nextLevel().pic === S.pic;
+  // paint earned so far for the current picture: still in the jars plus already on the picture
+  const earned = () => picture().palette.map((_, c) => (S.paint[c] || 0) + picture().regions.filter(r => r.c === c && S.painted.includes(r.id)).length);
+  const nextLevel = () => LevelGen.build(S.level, picture(), S.pic, earned());
+  const canBrew = () => !allDone() && LevelGen.needs(picture(), earned()).some(n => n > 0);
 
   // ───── screens ─────
   function go(name) {
