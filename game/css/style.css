@@ -312,3 +312,4 @@ button:focus-visible { outline-color: var(--ink); }
 .tag-num { display: inline-grid; place-items: center; width: 20px; height: 18px; border-radius: 4px; background: var(--ink); color: var(--milk); font-size: 12px; }
 .buy-swatch svg { width: 96px; height: 96px; }
 .pat .pat-tag svg { width: 16px; height: 16px; }
+.pat .clash { font: 400 13px/1 'Pangolin', sans-serif; }
