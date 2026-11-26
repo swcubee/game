@@ -291,3 +291,24 @@ button:focus-visible { outline-color: var(--ink); }
     #f4e7ef !important; }
 .flask .layer.hid::after { content: none; }
 .sparkle.puff { width: 12px; height: 12px; background: #fff; box-shadow: 0 0 6px rgba(255,255,255,.9); }
+/* ───── shop ───── */
+.shop-body { overflow-y: auto; padding: 8px 16px 30px; max-width: 640px; width: 100%; margin: 0 auto; }
+.shop-body h2 { font-weight: 400; font-size: 24px; text-align: center; margin: 12px 0 4px; }
+.shop-tip { text-align: center; margin: 0 0 10px; color: #8a6f7c; font-size: 16px; }
+.shop-paints { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
+.shop-paint { width: 54px; height: 70px; border-radius: 12px; transition: transform .1s; }
+.shop-paint svg { width: 100%; height: 100%; }
+.shop-paint.sel { transform: translateY(-6px); background: var(--milk); box-shadow: 0 4px 0 var(--shade); }
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 12px; }
+.pat { display: grid; justify-items: center; gap: 2px; padding: 8px 4px 6px; border-radius: 12px; background: var(--milk); color: var(--ink);
+  box-shadow: 0 4px 0 var(--shade); transition: transform .08s; }
+.pat:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--shade); }
+.pat svg { width: 52px; height: 52px; }
+.pat-name { font-size: 15px; line-height: 1.1; text-align: center; }
+.pat-tag { font: 900 15px/1 'Nunito', sans-serif; min-height: 18px; display: flex; align-items: center; gap: 2px; }
+.pat.buy { background: #fbeee4; }
+.pat.on { background: #e6f2da; box-shadow: 0 4px 0 #c6dcb0; }
+.pat.used { opacity: .5; }
+.tag-num { display: inline-grid; place-items: center; width: 20px; height: 18px; border-radius: 4px; background: var(--ink); color: var(--milk); font-size: 12px; }
+.buy-swatch svg { width: 96px; height: 96px; }
+.pat .pat-tag svg { width: 16px; height: 16px; }

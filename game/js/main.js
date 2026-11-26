@@ -8,11 +8,20 @@
   // level: index of the next sort level; pic: picture being painted;
   // paint: units of paint per colour of the current picture (1 picture = 1 palette)
   // stars, ach, stats: sugar stars and achievements (js/meta.js), added in save v2
-  let S = { v: 2, level: 0, pic: 0, paint: [], painted: [], done: [], sound: true, tut: {}, stars: 0, ach: [], stats: {} };
+  // owned: patterns bought in the shop; pats: chosen pattern per colour for each picture id (save v3)
+  let S = { v: 3, level: 0, pic: 0, paint: [], painted: [], done: [], sound: true, tut: {}, stars: 0, ach: [], stats: {}, owned: [], pats: {} };
   const save = () => SDK.save(SAVE_KEY, S);
   const picture = () => PICTURES[Math.min(S.pic, PICTURES.length - 1)];
   const allDone = () => S.pic >= PICTURES.length;
   let sel = 0, screen = 'paint', overlayOpen = false;
+  // patterns of a picture: the player's choice where valid, otherwise the starter set; never two colours with one pattern
+  const ownsPattern = id => { const p = Patterns.get(id); return !!p && (!p.price || S.owned.includes(id)); };
+  function patternsOf(p) {
+    const def = Patterns.defaults(p), mine = S.pats[p.id] || [], out = [];
+    p.palette.forEach((_, c) => { const id = mine[c]; out.push(id && ownsPattern(id) && !out.includes(id) ? id : null); });
+    p.palette.forEach((_, c) => { if (!out[c]) out[c] = def.find(id => !out.includes(id)) || def[c]; });
+    return out;
+  }
 
   const need = c => picture().regions.filter(r => r.c === c && !S.painted.includes(r.id)).length;
   // paint earned so far for the current picture: still in the jars plus already on the picture
@@ -23,18 +32,20 @@
   // ───── screens ─────
   function go(name) {
     screen = name;
-    ['paint', 'sort', 'gallery'].forEach(s => $(s).classList.toggle('hidden', s !== name));
+    ['paint', 'sort', 'gallery', 'shop'].forEach(s => $(s).classList.toggle('hidden', s !== name));
     if (name !== 'sort') SortScene.stop();
     if (name === 'gallery') { SDK.gameplayStop(); renderGallery(); }
+    else if (name === 'shop') { SDK.gameplayStop(); renderShop(); }
     else if (!overlayOpen) SDK.gameplayStart();
   }
 
   // ───── paint screen ─────
-  function jarSVG(color, num, level) {
-    const top = 64 - 44 * level;
-    return `<svg viewBox="0 0 54 70" aria-hidden="true"><defs><clipPath id="jc-${num}-${color.slice(1)}"><path d="M10,18C7,20 7,23 7,27V58C7,63.5 10.5,66.5 16,66.5H38C43.5,66.5 47,63.5 47,58V27C47,23 47,20 44,18Z"/></clipPath></defs>
+  let jarSeq = 0;
+  function jarSVG(color, num, level, pattern) {
+    const top = 64 - 44 * level, pid = `jp-${++jarSeq}`, cid = `jc-${jarSeq}`;   // ids unique: a clip in a hidden screen does not apply
+    return `<svg viewBox="0 0 54 70" aria-hidden="true"><defs>${pattern ? Patterns.def(pid, pattern, color, 0.62) : ''}<clipPath id="${cid}"><path d="M10,18C7,20 7,23 7,27V58C7,63.5 10.5,66.5 16,66.5H38C43.5,66.5 47,63.5 47,58V27C47,23 47,20 44,18Z"/></clipPath></defs>
       <path d="M10,18C7,20 7,23 7,27V58C7,63.5 10.5,66.5 16,66.5H38C43.5,66.5 47,63.5 47,58V27C47,23 47,20 44,18Z" fill="#d6e8ee" fill-opacity=".2"/>
-      <g clip-path="url(#jc-${num}-${color.slice(1)})"><rect x="0" y="${top}" width="54" height="70" fill="${color}"/><ellipse cx="27" cy="${top}" rx="22" ry="3" fill="#fff" fill-opacity=".18"/></g>
+      <g clip-path="url(#${cid})"><rect x="0" y="${top}" width="54" height="70" fill="${pattern ? `url(#${pid})` : color}"/><ellipse cx="27" cy="${top}" rx="22" ry="3" fill="#fff" fill-opacity=".18"/></g>
       <path d="M10,18C7,20 7,23 7,27V58C7,63.5 10.5,66.5 16,66.5H38C43.5,66.5 47,63.5 47,58V27C47,23 47,20 44,18Z" fill="none" stroke="#e4f1f5" stroke-opacity=".85" stroke-width="2"/>
       <path d="M13,28V54" stroke="#fff" stroke-opacity=".35" stroke-width="2.6" stroke-linecap="round"/>
       <path d="M9,6.5C9,4.5 10.5,3 12.5,3H41.5C43.5,3 45,4.5 45,6.5V15C45,17 43.5,18.5 41.5,18.5H12.5C10.5,18.5 9,17 9,15Z" fill="#4a3150" stroke="#2a1b2f" stroke-width="1.6"/>
@@ -63,14 +74,14 @@
 
   function renderJars() {
     renderStars();
-    const p = picture(), box = $('jars');
+    const p = picture(), box = $('jars'), pats = patternsOf(p);
     box.innerHTML = '';
     p.palette.forEach((color, c) => {
       const n = need(c), have = S.paint[c] || 0;
       const b = document.createElement('button');
       b.className = 'jar' + (c === sel ? ' sel' : '') + (n === 0 ? ' done' : '') + (n > 0 && have === 0 ? ' empty' : '');
       b.setAttribute('aria-label', `${c + 1}`);
-      b.innerHTML = jarSVG(color, c + 1, n === 0 ? 0.05 : jarLevel(have)) + `<span class="count">${n === 0 ? CHECK : have}</span>`;
+      b.innerHTML = jarSVG(color, c + 1, n === 0 ? 0.05 : jarLevel(have), pats[c]) + `<span class="count">${n === 0 ? CHECK : have}</span>`;
       b.addEventListener('click', () => pickColor(c));
       box.appendChild(b);
     });
@@ -95,7 +106,7 @@
   function showPaint() {
     if (S.paint.length !== picture().palette.length) S.paint = picture().palette.map(() => 0);
     autoSelect();
-    PaintScene.show(picture(), allDone() ? picture().regions.map(r => r.id) : S.painted, sel, { onTap });
+    PaintScene.show(picture(), allDone() ? picture().regions.map(r => r.id) : S.painted, sel, { onTap }, patternsOf(picture()));
     if (allDone()) PaintScene.alive(true);
     renderJars();
     go('paint');
@@ -150,7 +161,7 @@
     reward.forEach((r, c) => { S.paint[c] = (S.paint[c] || 0) + r; });
     const res = Meta.levelWon(info);
     S.level++; save(); SDK.reportLevel(S.level);
-    const loot = reward.map((r, c) => r ? `<div class="jar">${jarSVG(picture().palette[c], c + 1, jarLevel(r))}<span class="count">+${r}</span></div>` : '').join('');
+    const loot = reward.map((r, c) => r ? `<div class="jar">${jarSVG(picture().palette[c], c + 1, jarLevel(r), patternsOf(picture())[c])}<span class="count">+${r}</span></div>` : '').join('');
     note(`<h2>${t('winTitle')}</h2><p>${t('winText')}</p><div class="loot">${loot}</div>${earnHTML(res)}`, [[t('toPaint'), () => { closeNote(); showPaint(); }]]);
     toasts(res.ach);
   }
@@ -165,8 +176,8 @@
     const b = $('board'); b.innerHTML = '';
     PICTURES.forEach((p, i) => {
       const f = document.createElement('div');
-      if (S.done.includes(p.id)) { f.className = 'frame'; f.innerHTML = PaintScene.markup(p, 'all') + `<span class="cap">${p.name[I18N.lang()] || p.name.en}</span>`; }
-      else if (i === S.pic) { f.className = 'frame'; f.innerHTML = PaintScene.markup(p, new Set(S.painted)) + `<span class="cap progress">${t('progress', { a: S.painted.length, b: p.regions.length })}</span>`; }
+      if (S.done.includes(p.id)) { f.className = 'frame'; f.innerHTML = PaintScene.markup(p, 'all', { patterns: patternsOf(p) }) + `<span class="cap">${p.name[I18N.lang()] || p.name.en}</span>`; }
+      else if (i === S.pic) { f.className = 'frame'; f.innerHTML = PaintScene.markup(p, new Set(S.painted), { patterns: patternsOf(p) }) + `<span class="cap progress">${t('progress', { a: S.painted.length, b: p.regions.length })}</span>`; }
       else { f.className = 'frame locked'; f.textContent = '?'; }
       b.appendChild(f);
     });
@@ -176,6 +187,51 @@
     al.innerHTML = `<h2>${t('achTitle')}</h2>` + Meta.list().map(a => `<div class="ach${Meta.has(a.id) ? ' got' : ''}">
       <i>${Meta.has(a.id) ? CHECK : STAR}</i><b>${t('ach_' + a.id)}</b><small>${t('achDo_' + a.id)}</small><span>+${a.stars}</span></div>`).join('');
     b.appendChild(al);
+  }
+
+  // ───── shop: patterns for stars, and the patterns of the current picture ─────
+  let shopSel = 0;
+  function swatch(patternId, color) {
+    const id = `sw-${++jarSeq}`;
+    return `<svg viewBox="0 0 48 48" aria-hidden="true"><defs>${Patterns.def(id, patternId, color, 0.9)}</defs><rect x="2" y="2" width="44" height="44" rx="10" fill="url(#${id})"/></svg>`;
+  }
+  function renderShop() {
+    renderStars(); $('shop-stars-n').textContent = S.stars;
+    const box = $('shop-body'), p = picture(), cur = allDone() ? null : patternsOf(p);
+    let h = '';
+    if (cur) {
+      shopSel = Math.min(shopSel, p.palette.length - 1);
+      h += `<h2>${t('shopPic')}</h2><p class="shop-tip">${t('shopPick')}</p><div class="shop-paints">` + p.palette.map((color, c) =>
+        `<button class="shop-paint${c === shopSel ? ' sel' : ''}" data-c="${c}" aria-label="${c + 1}">${jarSVG(color, c + 1, 0.9, cur[c])}</button>`).join('') + '</div>';
+    }
+    h += `<h2>${t('shopPatterns')}</h2><div class="shop-grid">`;
+    const color = cur ? p.palette[shopSel] : '#e9cba7';
+    for (const pt of Patterns.list) {
+      const own = ownsPattern(pt.id), usedBy = cur ? cur.indexOf(pt.id) : -1;
+      const state = usedBy === shopSel ? 'on' : usedBy >= 0 ? 'used' : own ? 'own' : 'buy';
+      const tag = state === 'on' ? CHECK : state === 'used' ? `<b class="tag-num">${usedBy + 1}</b>` : state === 'buy' ? `${STAR}${pt.price}` : '';
+      h += `<button class="pat ${state}" data-id="${pt.id}"${state === 'used' ? ' disabled' : ''}>${swatch(pt.id, color)}<span class="pat-name">${t('pat_' + pt.id)}</span><span class="pat-tag">${tag}</span></button>`;
+    }
+    box.innerHTML = h + '</div>';
+    box.querySelectorAll('.shop-paint').forEach(b => b.addEventListener('click', () => { Sound.pick(); shopSel = +b.dataset.c; renderShop(); }));
+    box.querySelectorAll('.pat').forEach(b => b.addEventListener('click', () => pickPattern(b.dataset.id)));
+  }
+  function pickPattern(id) {
+    const pt = Patterns.get(id);
+    if (!ownsPattern(id)) {
+      if (S.stars < pt.price) { Sound.error(); note(`<h2>${t('notEnough')}</h2><p>${t('notEnoughText', { n: pt.price - S.stars })}</p>`, [[t('ok'), closeNote]]); return; }
+      Sound.pick();
+      note(`<h2>${t('pat_' + id)}</h2><div class="buy-swatch">${swatch(id, allDone() ? '#e9cba7' : picture().palette[shopSel])}</div><p>${t('buyQ', { n: pt.price })}</p>`,
+        [[t('buy'), () => { closeNote(); const got = Meta.buy(pt.price); S.owned.push(id); if (!allDone()) setPattern(id); save(); Sound.cork(); renderShop(); toasts(got); }], [t('notNow'), closeNote]]);
+      return;
+    }
+    if (allDone()) return;
+    Sound.pick(); setPattern(id); save(); renderShop();
+  }
+  function setPattern(id) {
+    const p = picture(), cur = patternsOf(p);
+    if (cur.includes(id) && cur.indexOf(id) !== shopSel) return;     // already on another paint of this picture
+    cur[shopSel] = id; S.pats[p.id] = cur;
   }
 
   // ───── note overlay ─────
@@ -190,7 +246,7 @@
     $('overlay').classList.remove('hidden');
     setTimeout(() => n.querySelector('.btn') && n.querySelector('.btn').focus({ preventScroll: true }), 50);
   }
-  function closeNote() { overlayOpen = false; $('overlay').classList.add('hidden'); if (screen !== 'gallery') SDK.gameplayStart(); }
+  function closeNote() { overlayOpen = false; $('overlay').classList.add('hidden'); if (screen !== 'gallery' && screen !== 'shop') SDK.gameplayStart(); }
 
   // ───── first-time hints ─────
   function hand(el) {
@@ -225,13 +281,15 @@
       note(`<h2>${t('leave')}</h2><p>${t('leaveText')}</p>`, [[t('stay'), closeNote], [t('exit'), () => { closeNote(); showPaint(); }]]);
     });
     $('btn-gallery').addEventListener('click', () => { Sound.pick(); hand(null); go('gallery'); });
+    $('btn-shop').addEventListener('click', () => { Sound.pick(); hand(null); shopSel = sel; go('shop'); });
+    $('btn-shop-back').addEventListener('click', () => { Sound.pick(); showPaint(); });
     $('btn-gallery-back').addEventListener('click', () => { Sound.pick(); showPaint(); });
     const snd = $('btn-sound');
     snd.addEventListener('click', () => { S.sound = !S.sound; Sound.setOn(S.sound); snd.classList.toggle('off', !S.sound); save(); if (S.sound) Sound.pick(); });
     addEventListener('resize', () => { SortScene.relayout(); if (screen === 'paint') tutorialPaint(); });
     // pause on lost focus: no sound, no gameplay time
     const away = () => { Sound.suspend(); SDK.gameplayStop(); };
-    const back = () => { Sound.resume(); if (screen !== 'gallery' && !overlayOpen) SDK.gameplayStart(); };
+    const back = () => { Sound.resume(); if (screen !== 'gallery' && screen !== 'shop' && !overlayOpen) SDK.gameplayStart(); };
     document.addEventListener('visibilitychange', () => document.hidden ? away() : back());
     addEventListener('blur', away); addEventListener('focus', back);
   }
@@ -241,7 +299,9 @@
     const cfg = await SDK.config();
     I18N.setLocale(cfg.locale); I18N.apply();
     const saved = await SDK.load(SAVE_KEY);
-    if (saved && (saved.v === 1 || saved.v === 2)) S = Object.assign(S, saved, { v: 2 });   // v1 -> v2: Meta.init adds stars, achievements, stats
+    // v1 -> v2: Meta.init adds stars, achievements, stats; v2 -> v3: owned patterns and picture patterns (empty = defaults)
+    if (saved && [1, 2, 3].includes(saved.v)) S = Object.assign(S, saved, { v: 3 });
+    S.owned = S.owned || []; S.pats = S.pats || {};
     S.tut = S.tut || {};
     Meta.init(S);                 // achievements already earned by an old save are granted quietly
     Sound.setOn(S.sound); $('btn-sound').classList.toggle('off', !S.sound);

@@ -63,5 +63,8 @@
     return { lines, total, ach: check() };
   }
 
-  window.Meta = { init, levelWon, levelLost, cellPainted, pictureDone, list: () => ACH, stars: () => S.stars, has: id => S.ach.includes(id) };
+  // a pattern was bought in the shop (the caller checked the balance)
+  function buy(price) { S.stars -= price; S.stats.patternsBought = (S.stats.patternsBought || 0) + 1; return check(); }
+
+  window.Meta = { buy, init, levelWon, levelLost, cellPainted, pictureDone, list: () => ACH, stars: () => S.stars, has: id => S.ach.includes(id) };
 })();

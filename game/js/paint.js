@@ -15,19 +15,49 @@
     return `<path d="${d.d}" fill="${fill}" stroke="${stroke}" stroke-width="${d.s || 0}" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`;
   }
 
-  // static SVG markup of a picture (gallery, notes): painted = Set of cell ids or 'all'
-  function markup(pic, painted, { numbers = false, sel = -1 } = {}) {
+  // the main object of each colour: the biggest cell plus the cells of that colour touching it (transitively).
+  // It gets the colour's pattern; other cells of that colour stay plain. Measured once per picture in the browser.
+  const mainCache = {};
+  function mainCells(pic) {
+    if (mainCache[pic.id]) return mainCache[pic.id];
+    const out = new Set();
+    try {
+      const host = document.createElementNS(NS, 'svg');
+      host.setAttribute('viewBox', '0 0 360 480'); host.style.cssText = 'position:absolute;width:360px;height:480px;left:-9999px;top:0;visibility:hidden';
+      document.body.appendChild(host);
+      const box = {};
+      pic.regions.forEach(r => { const p = document.createElementNS(NS, 'path'); p.setAttribute('d', r.d); host.appendChild(p); const b = p.getBBox(); box[r.id] = b; });
+      host.remove();
+      const near = (a, b, t = 2.5) => a.x - t < b.x + b.width && b.x - t < a.x + a.width && a.y - t < b.y + b.height && b.y - t < a.y + a.height;
+      pic.palette.forEach((_, c) => {
+        const cells = pic.regions.filter(r => r.c === c);
+        if (!cells.length) return;
+        const big = cells.reduce((m, r) => box[r.id].width * box[r.id].height > box[m.id].width * box[m.id].height ? r : m);
+        const queue = [big]; out.add(big.id);
+        while (queue.length) {
+          const cur = queue.shift();
+          for (const r of cells) if (!out.has(r.id) && near(box[cur.id], box[r.id])) { out.add(r.id); queue.push(r); }
+        }
+      });
+    } catch (e) { /* no layout engine: no patterns */ }
+    return (mainCache[pic.id] = out);
+  }
+  const paintFill = (pic, r, pats) => pats && pats[r.c] && mainCells(pic).has(r.id) ? `url(#pt-${pic.id}-${r.c})` : pic.palette[r.c];
+
+  // static SVG markup of a picture (gallery, notes): painted = Set of cell ids or 'all'; patterns: pattern id per colour
+  function markup(pic, painted, { numbers = false, sel = -1, patterns = null } = {}) {
     const isP = id => painted === 'all' || painted.has(id);
     let s = `<svg viewBox="0 0 360 480" xmlns="${NS}"><defs>`;
     pic.palette.forEach((c, i) => {
       s += `<pattern id="hatch-${pic.id}-${i}" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><rect width="7" height="7" fill="${PAPER}"/><rect width="2.4" height="7" fill="${c}" fill-opacity=".42"/></pattern>`;
+      if (patterns && patterns[i]) s += Patterns.def(`pt-${pic.id}-${i}`, patterns[i], c);
     });
     s += '</defs>';
     pic.decorBack.filter(d => !d.top).forEach(d => { s += decorPath(d); });
     const anim = ALIVE[pic.id] || {};
     const cls = id => Object.keys(anim).filter(k => anim[k].includes(id)).join(' ');
     pic.regions.forEach(r => {
-      const fill = isP(r.id) ? pic.palette[r.c] : (r.c === sel ? `url(#hatch-${pic.id}-${r.c})` : PAPER);
+      const fill = isP(r.id) ? paintFill(pic, r, patterns) : (r.c === sel ? `url(#hatch-${pic.id}-${r.c})` : PAPER);
       s += `<path class="cell ${cls(r.id)}${isP(r.id) ? '' : ' todo'}" data-id="${r.id}" data-c="${r.c}" d="${r.d}" style="fill:${fill}"/>`;
     });
     pic.decorBack.filter(d => d.top).forEach(d => { s += decorPath(d); });
@@ -43,13 +73,13 @@
     return s + '</svg>';
   }
 
-  let pic = null, painted = null, sel = -1, svg = null, cb = null;
+  let pic = null, painted = null, sel = -1, svg = null, cb = null, pats = null;
   const view = { s: 1, x: 0, y: 0 };
   const vp = () => document.getElementById('pic-viewport');
 
-  function show(picture, paintedIds, selected, callbacks) {
-    pic = picture; painted = new Set(paintedIds); sel = selected; cb = callbacks;
-    vp().innerHTML = markup(pic, painted, { numbers: true, sel });
+  function show(picture, paintedIds, selected, callbacks, patterns) {
+    pic = picture; painted = new Set(paintedIds); sel = selected; cb = callbacks; pats = patterns || null;
+    vp().innerHTML = markup(pic, painted, { numbers: true, sel, patterns: pats });
     svg = vp().querySelector('svg');
     view.s = 1; view.x = 0; view.y = 0; apply();
     document.getElementById('sheet').classList.remove('alive');
@@ -72,7 +102,7 @@
     const r = pic.regions.find(x => x.id === id);
     painted.add(id);
     const p = svg.querySelector(`.cell[data-id="${id}"]`);
-    p.classList.remove('todo'); p.style.fill = pic.palette[r.c];
+    p.classList.remove('todo'); p.style.fill = paintFill(pic, r, pats);
     svg.querySelector(`.num[data-for="${id}"]`).classList.add('gone');
     if (at) {
       const c = document.createElementNS(NS, 'circle');

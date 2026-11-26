@@ -32,6 +32,9 @@
       <button class="icon-btn" id="btn-gallery" aria-label="Gallery">
         <svg viewBox="0 0 32 32"><path d="M6,7.5C11,6.8 21,6.6 26.2,7.2L25.6,25.4C20,25.9 11.5,26 6.4,25.2Z"/><path d="M9.5,21.5L14,15.6 17.4,19.4 19.8,16.6 23,21.8"/><circle cx="20.6" cy="11.8" r="1.7"/></svg>
       </button>
+      <button class="icon-btn" id="btn-shop" aria-label="Shop">
+        <svg viewBox="0 0 32 32"><path d="M5.5,12.5L7.5,6.5H24.5L26.5,12.5"/><path d="M5.5,12.5C5.5,15 9.5,15 9.5,12.5C9.5,15 13.8,15 13.8,12.5C13.8,15 18.2,15 18.2,12.5C18.2,15 22.5,15 22.5,12.5C22.5,15 26.5,15 26.5,12.5"/><path d="M7.5,15.5V25.5H24.5V15.5M13,25.5V19.5H19V25.5"/></svg>
+      </button>
       <span class="spacer"></span>
       <div class="stars" id="stars" role="status"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="star" d="M12,2.6L14.7,8.6 21.2,9.2 16.3,13.5 17.8,19.9 12,16.5 6.2,19.9 7.7,13.5 2.8,9.2 9.3,8.6Z"/></svg><b id="stars-n">0</b></div>
       <span class="spacer"></span>
@@ -88,6 +91,18 @@
     <div class="board" id="board"></div>
   </section>
 
+  <!-- SHOP: patterns for stars -->
+  <section id="shop" class="screen hidden">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-shop-back" aria-label="Back">
+        <svg viewBox="0 0 32 32"><path d="M19.6,7.4L10.4,16.2 19.8,24.8"/></svg>
+      </button>
+      <h1 class="screen-title" data-i18n="shop">Лавка</h1>
+      <div class="stars"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="star" d="M12,2.6L14.7,8.6 21.2,9.2 16.3,13.5 17.8,19.9 12,16.5 6.2,19.9 7.7,13.5 2.8,9.2 9.3,8.6Z"/></svg><b id="shop-stars-n">0</b></div>
+    </header>
+    <div class="shop-body" id="shop-body"></div>
+  </section>
+
   <!-- Overlays -->
   <div class="overlay hidden" id="overlay">
     <div class="note" id="note"></div>
@@ -102,6 +117,7 @@
 <script src="js/level-pool.js"></script>
 <script src="js/levelgen.js"></script>
 <script src="js/meta.js"></script>
+<script src="js/patterns.js"></script>
 <script src="js/i18n.js"></script>
 <script src="js/sdk-adapter.js"></script>
 <script src="js/audio.js"></script>
