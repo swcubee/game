@@ -1,6 +1,7 @@
 """Automated play-through in headless Chromium.
 Plays sort levels by the shortest solution, paints every cell it can, and saves screenshots.
-Usage: python3 tools/playtest.py OUT_DIR [width height] [levels_to_play] [start_level_index]
+Usage: python3 tools/playtest.py OUT_DIR [width height] [levels_to_play] [start_picture_index]
+Levels are built at runtime (js/levelgen.js); a start picture > 0 begins there with a fresh save.
 """
 import sys, os, pathlib
 from playwright.sync_api import sync_playwright
@@ -45,7 +46,7 @@ def lose_by_moves(pg):
     want = pg.evaluate("I18N.t('loseMoves')")
     if want not in text:
         raise SystemExit('expected the out-of-moves loss, got: ' + text)
-    print('out of moves after', pg.evaluate("LEVELS[0].moves"), 'moves: level lost')
+    print('out of moves: level lost')
 
 with sync_playwright() as p:
     b = p.chromium.launch()
@@ -54,7 +55,7 @@ with sync_playwright() as p:
     pg.on('console', lambda m: m.type in ('error', 'warning') and (errors.append(m.text), print('CONSOLE', m.text, flush=True)))
     pg.goto(url); pg.wait_for_timeout(300)
     if START:
-        pg.evaluate('''s => { const pic = LEVELS[s].pic; localStorage.setItem('spooky-paint:save', JSON.stringify({ v: 1, level: s, pic,
+        pg.evaluate('''pic => { localStorage.setItem('spooky-paint:save', JSON.stringify({ v: 1, level: 1 + 6 * pic, pic,
             paint: [], painted: [], done: PICTURES.slice(0, pic).map(p => p.id), sound: false, tut: { brewed: true, painted: true } })); }''', START)
         pg.reload()
     pg.wait_for_timeout(900)
@@ -65,7 +66,9 @@ with sync_playwright() as p:
         pg.locator('#shelves .flask').nth(0).click(force=True); pg.wait_for_timeout(250)
         if lv == 0: pg.screenshot(path=f'{out}/03-selected.png')
         pg.locator('#shelves .flask').nth(0).click(force=True); pg.wait_for_timeout(200)
-        if lv == 0 and START == 0:
+        if lv == 0 and START == 0 and not pg.locator('#moves.hidden').count():
+            raise SystemExit('the tutorial level must have no move limit')
+        if lv == 1 and START == 0:
             lose_by_moves(pg)
             pg.screenshot(path=f'{out}/03-lost.png')
             pg.click('#note .btn', force=True); pg.wait_for_timeout(500)

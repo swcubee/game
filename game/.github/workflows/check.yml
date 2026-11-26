@@ -19,8 +19,7 @@ jobs:
       - name: Generated data is up to date
         run: |
           node tools/build-pictures.mjs
-          node tools/generate-levels.mjs
-          git diff --exit-code -- js/pictures.js js/levels.js || (echo "::error::Run the generators and commit js/pictures.js and js/levels.js" && exit 1)
+          git diff --exit-code -- js/pictures.js || (echo "::error::Run the picture generator and commit js/pictures.js" && exit 1)
 
       - name: Install Playwright
         run: |
