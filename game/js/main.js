@@ -186,6 +186,7 @@
     $('btn-undo').addEventListener('click', () => SortScene.undo());
     $('btn-restart').addEventListener('click', () => { Sound.pick(); SortScene.restart(); });
     $('btn-back').addEventListener('click', () => {
+      if (SortScene.locked()) return;          // leaving mid-pour or right after the last move would lose the result
       Sound.pick();
       note(`<h2>${t('leave')}</h2><p>${t('leaveText')}</p>`, [[t('stay'), closeNote], [t('exit'), () => { closeNote(); showPaint(); }]]);
     });
