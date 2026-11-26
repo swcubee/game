@@ -281,3 +281,13 @@ button:focus-visible { outline-color: var(--ink); }
 .ach { background: #efe0e8; color: #9a7f8c; }
 .ach:not(.got) i .star-ico path { stroke: #b9a1ae; }
 .toast small { color: #9a7f8c; }
+/* sugar cloud over hidden layers (replaces the cobweb): powdered sugar, opens with a soft "poof" */
+.flask .layer.hid { background:
+    radial-gradient(circle at 22% 38%, #fff 0 16%, transparent 17%),
+    radial-gradient(circle at 50% 30%, #fff 0 22%, transparent 23%),
+    radial-gradient(circle at 78% 42%, #fff 0 15%, transparent 17%),
+    radial-gradient(circle at 36% 70%, rgba(255,255,255,.9) 0 18%, transparent 19%),
+    radial-gradient(circle at 66% 72%, rgba(255,255,255,.9) 0 17%, transparent 18%),
+    #f4e7ef !important; }
+.flask .layer.hid::after { content: none; }
+.sparkle.puff { width: 12px; height: 12px; background: #fff; box-shadow: 0 0 6px rgba(255,255,255,.9); }
