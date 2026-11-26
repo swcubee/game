@@ -201,3 +201,51 @@ button:focus-visible { outline: 3px dashed var(--candle); outline-offset: 3px; b
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ───── "Zefir" theme (26.11.2026): soft pastel room instead of the dark Halloween workshop ───── */
+:root {
+  --wall: #f6e3ec;
+  --wall-deep: #f0d6e2;
+  --ink: #6b4a5a;
+  --paper: #fff6ee;
+  --pumpkin: #f59e86;        /* main action colour, kept under the old name */
+  --pumpkin-dark: #d77a62;
+  --candle: #f9e58a;
+  --wood: #d2a77f;
+  --wood-dark: #a97c58;
+  --chalk: #6b4a5a;          /* text on the wall is now dark */
+  --milk: #fff3e6;
+  --shade: #e9cfdb;
+}
+html, body { background: var(--wall-deep); }
+#game { background:
+    repeating-linear-gradient(90deg, rgba(255,255,255,.45) 0 14px, transparent 14px 40px),
+    linear-gradient(180deg, #f9eaf1 0%, var(--wall) 60%, var(--wall-deep) 100%); }
+.candle-glow { background: radial-gradient(closest-side, rgba(255,243,196,.75), rgba(255,243,196,.25) 55%, transparent); left: auto; right: -18vmax; top: -24vmax; bottom: auto; animation: none; }
+.window { opacity: .95; filter: drop-shadow(0 6px 0 var(--shade)); }
+button:focus-visible { outline-color: var(--ink); }
+.icon-btn, .undo { background: var(--milk); box-shadow: 0 4px 0 var(--shade), inset 0 1px 0 #fff; }
+.icon-btn:active, .undo:active { box-shadow: 0 1px 0 var(--shade); }
+.icon-btn svg, .undo svg { stroke: var(--ink); }
+.sheet { box-shadow: 0 1px 0 #efe0d4, 0 3px 0 #e4d0c2, 0 18px 28px -14px rgba(107,74,90,.45); }
+.num { fill: #9a7f8c; }
+.tray::before { background: rgba(255,255,255,.35); }
+.brew { color: #fff; text-shadow: 0 1px 0 rgba(107,74,90,.35); box-shadow: 0 5px 0 var(--pumpkin-dark), 0 10px 18px -8px rgba(107,74,90,.45), inset 0 2px 0 rgba(255,255,255,.35); }
+.brew .pot, .brew .rim { fill: var(--ink); } .brew .leg { stroke: var(--ink); }
+.brew .brewliq { fill: #cdebb4; } .brew .bub { fill: #fff; }
+.brew:disabled { background: #e3d3dc; box-shadow: 0 5px 0 #cdb8c4; color: #9a7f8c; text-shadow: none; }
+.btn { color: #fff; text-shadow: 0 1px 0 rgba(107,74,90,.35); }
+.btn.quiet { background: var(--milk); box-shadow: 0 5px 0 var(--shade); color: var(--ink); text-shadow: none; }
+.flask .layer.hid { background: #dccbd5 !important; }
+.flask .layer.hid::after { color: #9a7f8c; }
+.undo .pips i { background: var(--pumpkin); box-shadow: 0 0 0 2px var(--milk); }
+.undo .pips i.used { background: #e3d3dc; }
+.frame { box-shadow: 0 0 0 6px var(--wood), 0 0 0 8px var(--wood-dark), 0 14px 20px -10px rgba(107,74,90,.45); }
+.frame.locked { background: #efe0e8; box-shadow: 0 0 0 6px #e3d0da, 0 0 0 8px #d3bcc8; color: #b9a1ae; }
+.frame .cap.progress { color: #d77a62; }
+.board .soon { color: #9a7f8c; }
+.overlay { background: rgba(107,74,90,.35); }
+.note { box-shadow: 0 2px 0 #eadbcf, 0 24px 40px -16px rgba(107,74,90,.55); }
+.note p { color: #8a6f7c; }
+.float-tag.enough { background: #efe2d6; color: #8a6f7c; }
+.hand svg { filter: drop-shadow(0 4px 3px rgba(107,74,90,.3)); }
