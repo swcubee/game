@@ -50,7 +50,7 @@
   function cellPainted() { S.stats.cells++; return check(); }
   // a picture was finished. number: 1-based picture number, leftover: paint units still in the jars
   function pictureDone(number, leftover) {
-    const st = S.stats, lines = [['picture', 10 + number]];
+    const st = S.stats, lines = [['picture', 15 + 2 * number]];   // design 26.11: was 10 + number
     st.pics++;
     const fromPaint = Math.floor(leftover / 2);
     if (fromPaint) lines.push(['leftover', fromPaint]);

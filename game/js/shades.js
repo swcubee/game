@@ -5,15 +5,15 @@
 (function () {
   const MIN_DE = 12;
   const L = [
-    { id: 'honey', base: '#F9E58A', hex: '#F0C24E', price: 60 },
-    { id: 'raspberry', base: '#F9C6D0', hex: '#EE9BB5', price: 60 },
-    { id: 'mint', base: '#A9CFF0', hex: '#A6E3D2', price: 70 },
-    { id: 'pistachio', base: '#CDEBB4', hex: '#A0BE5A', price: 50 },
-    { id: 'sunset', base: '#F59E86', hex: '#F8B48A', price: 60 },
-    { id: 'lavender', base: '#B39BE3', hex: '#9F87DE', price: 70 },
-    { id: 'seawave', base: '#4FAFA6', hex: '#5AA3C4', price: 70 },
-    { id: 'chocolate', base: '#8B6656', hex: '#5E3D30', price: 50 },
-    { id: 'caramel', base: '#E9CBA7', hex: '#C19E4D', price: 50 },
+    { id: 'honey', base: '#F9E58A', hex: '#F0C24E', price: 30 },
+    { id: 'raspberry', base: '#F9C6D0', hex: '#EE9BB5', price: 30 },
+    { id: 'mint', base: '#A9CFF0', hex: '#A6E3D2', price: 40 },
+    { id: 'pistachio', base: '#CDEBB4', hex: '#A0BE5A', price: 30 },
+    { id: 'sunset', base: '#F59E86', hex: '#F8B48A', price: 30 },
+    { id: 'lavender', base: '#B39BE3', hex: '#9F87DE', price: 40 },
+    { id: 'seawave', base: '#4FAFA6', hex: '#5AA3C4', price: 40 },
+    { id: 'chocolate', base: '#8B6656', hex: '#5E3D30', price: 30 },
+    { id: 'caramel', base: '#E9CBA7', hex: '#C19E4D', price: 30 },
   ];
   const byId = Object.fromEntries(L.map(s => [s.id, s]));
 
