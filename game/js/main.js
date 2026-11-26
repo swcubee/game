@@ -10,7 +10,8 @@
   // stars, ach, stats: sugar stars and achievements (js/meta.js), added in save v2
   // owned: patterns bought in the shop; pats: chosen pattern per colour for each picture id (save v3)
   // shades: replacement shades bought; tints: chosen shade id (or null) per colour for each picture id (save v4)
-  let S = { v: 4, level: 0, pic: 0, paint: [], painted: [], done: [], sound: true, tut: {}, stars: 0, ach: [], stats: {}, owned: [], pats: {}, shades: [], tints: {} };
+  // art: free colouring of finished pictures, {pictureId: {cellId: [hex, patternId|null]}} (save v5)
+  let S = { v: 5, level: 0, pic: 0, paint: [], painted: [], done: [], sound: true, tut: {}, stars: 0, ach: [], stats: {}, owned: [], pats: {}, shades: [], tints: {}, art: {} };
   const save = () => SDK.save(SAVE_KEY, S);
   // a picture with the player's shades applied: palette = colours now, base = the picture's own colours
   function dress(p) {
@@ -39,10 +40,11 @@
   // ───── screens ─────
   function go(name) {
     screen = name;
-    ['paint', 'sort', 'gallery', 'shop'].forEach(s => $(s).classList.toggle('hidden', s !== name));
+    ['paint', 'sort', 'gallery', 'shop', 'studio'].forEach(s => $(s).classList.toggle('hidden', s !== name));
     if (name !== 'sort') SortScene.stop();
     if (name === 'gallery') { SDK.gameplayStop(); renderGallery(); }
     else if (name === 'shop') { SDK.gameplayStop(); renderShop(); }
+    else if (name === 'studio') { SDK.gameplayStop(); renderStudio(); }
     else if (!overlayOpen) SDK.gameplayStart();
   }
 
@@ -183,12 +185,17 @@
     const b = $('board'); b.innerHTML = '';
     PICTURES.forEach((p0, i) => {
       const f = document.createElement('div'), p = dress(p0);
-      if (S.done.includes(p.id)) { f.className = 'frame'; f.innerHTML = PaintScene.markup(p, 'all', { patterns: patternsOf(p) }) + `<span class="cap">${p.name[I18N.lang()] || p.name.en}</span>`; }
+      if (S.done.includes(p.id)) {
+        f.className = 'frame done'; f.innerHTML = PaintScene.markup(p, 'all', { patterns: patternsOf(p) }) + `<span class="cap">${p.name[I18N.lang()] || p.name.en}</span>`;
+        applyArt(f.querySelector('svg'), p);
+        f.addEventListener('click', () => { Sound.pick(); studio.pic = p0.id; go('studio'); });
+      }
       else if (i === S.pic) { f.className = 'frame'; f.innerHTML = PaintScene.markup(p, new Set(S.painted), { patterns: patternsOf(p) }) + `<span class="cap progress">${t('progress', { a: S.painted.length, b: p.regions.length })}</span>`; }
       else { f.className = 'frame locked'; f.textContent = '?'; }
       b.appendChild(f);
     });
     if (allDone()) b.insertAdjacentHTML('beforeend', `<p class="soon">${t('soon')}</p>`);
+    if (S.done.length) b.insertAdjacentHTML('afterbegin', `<p class="gallery-tip">${t('studioTip')}</p>`);
     // achievements album: what each one asks for and gives, earned ones ticked
     const al = document.createElement('div'); al.className = 'album';
     al.innerHTML = `<h2>${t('achTitle')}</h2>` + Meta.list().map(a => `<div class="ach${Meta.has(a.id) ? ' got' : ''}">
@@ -271,6 +278,47 @@
     cur[shopSel] = id; S.pats[p.id] = cur;
   }
 
+  // ───── free colouring (studio): finished pictures only, free, no sorting, no palette rules (design 26.11) ─────
+  const ZEFIR = ['#F9E58A', '#F9C6D0', '#A9CFF0', '#CDEBB4', '#F59E86', '#B39BE3', '#4FAFA6', '#8B6656', '#E9CBA7'];
+  const studio = { pic: null, color: ZEFIR[0], pat: null };
+  // the player's free colouring on a picture's svg (gallery frame or studio)
+  // ids must be unique in the page (hidden screens keep their svgs, and a url(#id) into a hidden one draws nothing)
+  let artSeq = 0;
+  function applyArt(svg, p) {
+    const art = S.art[p.id]; if (!art || !svg) return;
+    const tag = ++artSeq;
+    const defs = svg.querySelector('defs'), have = new Set();
+    svg.querySelectorAll('path.cell').forEach(el => {
+      const a = art[el.dataset.id]; if (!a) return;
+      const [hex, pat] = a;
+      if (pat && Patterns.get(pat)) {
+        const id = `fc${tag}-${p.id}-${pat}-${hex.slice(1)}`;
+        if (!have.has(id)) { have.add(id); defs.insertAdjacentHTML('beforeend', Patterns.def(id, pat, hex)); }
+        el.style.fill = `url(#${id})`;
+      } else el.style.fill = hex;
+    });
+  }
+  function renderStudio() {
+    const p = dress(PICTURES.find(x => x.id === studio.pic));
+    const box = $('studio-pic');
+    box.innerHTML = PaintScene.markup(p, 'all', { patterns: patternsOf(p) }).replace(/(id="|url\(#)(pt|hatch)-/g, '$1st$2-');
+    const svg = box.querySelector('svg');
+    applyArt(svg, p);
+    svg.querySelectorAll('path.cell').forEach(el => el.addEventListener('click', () => {
+      const art = S.art[p.id] = S.art[p.id] || {};
+      art[el.dataset.id] = [studio.color, studio.pat];
+      Sound.pick(); save(); renderStudio();
+    }));
+    const colours = ZEFIR.concat(Shades.list.filter(sh => S.shades.includes(sh.id)).map(sh => sh.hex));
+    const pats = Patterns.list.filter(pt => ownsPattern(pt.id));
+    $('studio-tools').innerHTML =
+      `<div class="studio-row">` + colours.map(hex => `<button class="studio-chip${hex === studio.color ? ' sel' : ''}" data-hex="${hex}" style="background:${hex}" aria-label="${hex}"></button>`).join('') + '</div>' +
+      `<div class="studio-row pats"><button class="studio-pat${!studio.pat ? ' sel' : ''}" data-pat="">${chip(studio.color)}</button>` +
+      pats.map(pt => `<button class="studio-pat${pt.id === studio.pat ? ' sel' : ''}" data-pat="${pt.id}" aria-label="${t('pat_' + pt.id)}">${swatch(pt.id, studio.color)}</button>`).join('') + '</div>';
+    $('studio-tools').querySelectorAll('.studio-chip').forEach(b => b.addEventListener('click', () => { Sound.pick(); studio.color = b.dataset.hex; renderStudio(); }));
+    $('studio-tools').querySelectorAll('.studio-pat').forEach(b => b.addEventListener('click', () => { Sound.pick(); studio.pat = b.dataset.pat || null; renderStudio(); }));
+  }
+
   // ───── note overlay ─────
   function note(html, buttons) {
     overlayOpen = true; SDK.gameplayStop();
@@ -283,7 +331,7 @@
     $('overlay').classList.remove('hidden');
     setTimeout(() => n.querySelector('.btn') && n.querySelector('.btn').focus({ preventScroll: true }), 50);
   }
-  function closeNote() { overlayOpen = false; $('overlay').classList.add('hidden'); if (screen !== 'gallery' && screen !== 'shop') SDK.gameplayStart(); }
+  function closeNote() { overlayOpen = false; $('overlay').classList.add('hidden'); if (!['gallery', 'shop', 'studio'].includes(screen)) SDK.gameplayStart(); }
 
   // ───── first-time hints ─────
   function hand(el) {
@@ -321,12 +369,18 @@
     $('btn-shop').addEventListener('click', () => { Sound.pick(); hand(null); shopSel = sel; go('shop'); });
     $('btn-shop-back').addEventListener('click', () => { Sound.pick(); showPaint(); });
     $('btn-gallery-back').addEventListener('click', () => { Sound.pick(); showPaint(); });
+    $('btn-studio-back').addEventListener('click', () => { Sound.pick(); go('gallery'); });
+    $('btn-studio-reset').addEventListener('click', () => {
+      if (!S.art[studio.pic]) return;
+      Sound.pick();
+      note(`<h2>${t('studioReset')}</h2><p>${t('studioResetText')}</p>`, [[t('studioResetYes'), () => { closeNote(); delete S.art[studio.pic]; save(); renderStudio(); }], [t('notNow'), closeNote]]);
+    });
     const snd = $('btn-sound');
     snd.addEventListener('click', () => { S.sound = !S.sound; Sound.setOn(S.sound); snd.classList.toggle('off', !S.sound); save(); if (S.sound) Sound.pick(); });
     addEventListener('resize', () => { SortScene.relayout(); if (screen === 'paint') tutorialPaint(); });
     // pause on lost focus: no sound, no gameplay time
     const away = () => { Sound.suspend(); SDK.gameplayStop(); };
-    const back = () => { Sound.resume(); if (screen !== 'gallery' && screen !== 'shop' && !overlayOpen) SDK.gameplayStart(); };
+    const back = () => { Sound.resume(); if (!['gallery', 'shop', 'studio'].includes(screen) && !overlayOpen) SDK.gameplayStart(); };
     document.addEventListener('visibilitychange', () => document.hidden ? away() : back());
     addEventListener('blur', away); addEventListener('focus', back);
   }
@@ -337,9 +391,9 @@
     I18N.setLocale(cfg.locale); I18N.apply();
     const saved = await SDK.load(SAVE_KEY);
     // v1 -> v2: Meta.init adds stars, achievements, stats; v2 -> v3: owned patterns and picture patterns (empty = defaults);
-    // v3 -> v4: shades and picture shades (empty = the picture's own colours)
-    if (saved && [1, 2, 3, 4].includes(saved.v)) S = Object.assign(S, saved, { v: 4 });
-    S.owned = S.owned || []; S.pats = S.pats || {}; S.shades = S.shades || []; S.tints = S.tints || {};
+    // v3 -> v4: shades and picture shades (empty = the picture's own colours); v4 -> v5: free colouring (empty = none)
+    if (saved && [1, 2, 3, 4, 5].includes(saved.v)) S = Object.assign(S, saved, { v: 5 });
+    S.owned = S.owned || []; S.pats = S.pats || {}; S.shades = S.shades || []; S.tints = S.tints || {}; S.art = S.art || {};
     S.tut = S.tut || {};
     Meta.init(S);                 // achievements already earned by an old save are granted quietly
     Sound.setOn(S.sound); $('btn-sound').classList.toggle('off', !S.sound);
