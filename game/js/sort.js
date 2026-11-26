@@ -32,6 +32,9 @@
     updatePips();
     updateMoves();
     tutorial();
+    // first level with sugar dust: say once what it is, a hand on a dusted flask until the first pour
+    st.dust = level.hidden > 0 && cb.dustHint ? st.hidden.findIndex(h => h.some(Boolean)) : -1;
+    if (st.dust >= 0) { showHint(I18N.t('dustHint')); requestAnimationFrame(() => st && st.dust >= 0 && hand(st.dust)); cb.dustHint(); }
   }
 
   function build() {
@@ -158,6 +161,7 @@
     const ta = st.hidden[a];
     if (ta.length && ta[ta.length - 1]) { ta[ta.length - 1] = false; revealed = true; }
     st.sel = null; st.moves++; updateMoves();
+    if (st.dust >= 0) { st.dust = -1; hideHint(); hand(null); }
 
     const dir = A.x < B.x ? 1 : -1;
     const mouthX = B.x + w / 2 - dir * w * 0.16, mouthY = B.y - h * 0.2;
@@ -294,6 +298,7 @@
 
   // first level only: a hand shows the next move of a shortest solution
   function tutorial() {
+    if (st && st.dust >= 0) return;
     if (!st || !st.cb.tutorial || st.over || st.moves >= 3) { hand(null); return; }
     const path = Rules.solvePath(st.tubes);
     if (!path || !path.length) { hand(null); return; }

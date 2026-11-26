@@ -20,16 +20,16 @@
     // shop
     { id: 'fish', price: 20, size: 22, svg: '<path d="M4,11C7,6.5 13,6.5 16,11C13,15.5 7,15.5 4,11ZM16,11L20,7.5V14.5Z" fill="T"/>' },
     { id: 'berries', price: 20, size: 18, svg: '<g fill="T"><circle cx="7" cy="11" r="3"/><circle cx="12" cy="12" r="3"/></g><path d="M7,8C8,5 10,4 12,4M12,9C11.5,6 12,5 12,4" fill="none" stroke="T" stroke-width="1.2"/>' },
-    { id: 'bows', price: 25, size: 20, svg: '<path d="M10,10L4,6V14ZM10,10L16,6V14Z" fill="T"/><circle cx="10" cy="10" r="2" fill="T"/>' },
-    { id: 'paws', price: 25, size: 20, svg: '<g fill="T"><ellipse cx="10" cy="13" rx="3.6" ry="3"/><circle cx="5.5" cy="8.5" r="1.6"/><circle cx="8.3" cy="6" r="1.6"/><circle cx="11.7" cy="6" r="1.6"/><circle cx="14.5" cy="8.5" r="1.6"/></g>' },
-    { id: 'daisies', price: 25, size: 20, svg: '<g fill="none" stroke="T" stroke-width="1.6"><circle cx="10" cy="10" r="2.2"/><path d="M10,2.5V6M10,14V17.5M2.5,10H6M14,10H17.5M4.7,4.7L7.2,7.2M12.8,12.8L15.3,15.3M15.3,4.7L12.8,7.2M7.2,12.8L4.7,15.3" stroke-linecap="round"/></g>' },
-    { id: 'snowflakes', price: 30, size: 20, svg: '<g stroke="T" stroke-width="1.6" stroke-linecap="round"><path d="M10,3V17M3.9,6.5L16.1,13.5M3.9,13.5L16.1,6.5"/></g>' },
-    { id: 'zigzag', price: 30, size: 16, svg: '<path d="M0,5L4,1 8,5 12,1 16,5M0,13L4,9 8,13 12,9 16,13" fill="none" stroke="T" stroke-width="2" stroke-linejoin="round"/>' },
-    { id: 'moons', price: 30, size: 20, svg: '<path d="M12,4A6.5,6.5 0 1 0 15,15A5,5 0 1 1 12,4Z" fill="T"/>' },
-    { id: 'drops', price: 35, size: 18, svg: '<path d="M9,3C12,8 13,10 13,12A4,4 0 0 1 5,12C5,10 6,8 9,3Z" fill="T"/>' },
-    { id: 'triangles', price: 35, size: 16, svg: '<path d="M8,2L14,13H2Z" fill="T" fill-opacity=".7"/>' },
-    { id: 'rings', price: 40, size: 16, svg: '<circle cx="8" cy="8" r="4.5" fill="none" stroke="T" stroke-width="2"/>' },
-    { id: 'petals', price: 40, size: 20, svg: '<path d="M10,3C14,6 14,11 10,13C6,11 6,6 10,3Z" fill="T"/><path d="M3,15C6,13 9,14 10,17C7,18 4,18 3,15Z" fill="T" fill-opacity=".7"/>' },
+    { id: 'bows', price: 20, size: 20, svg: '<path d="M10,10L4,6V14ZM10,10L16,6V14Z" fill="T"/><circle cx="10" cy="10" r="2" fill="T"/>' },
+    { id: 'paws', price: 20, size: 20, svg: '<g fill="T"><ellipse cx="10" cy="13" rx="3.6" ry="3"/><circle cx="5.5" cy="8.5" r="1.6"/><circle cx="8.3" cy="6" r="1.6"/><circle cx="11.7" cy="6" r="1.6"/><circle cx="14.5" cy="8.5" r="1.6"/></g>' },
+    { id: 'daisies', price: 20, size: 20, svg: '<g fill="none" stroke="T" stroke-width="1.6"><circle cx="10" cy="10" r="2.2"/><path d="M10,2.5V6M10,14V17.5M2.5,10H6M14,10H17.5M4.7,4.7L7.2,7.2M12.8,12.8L15.3,15.3M15.3,4.7L12.8,7.2M7.2,12.8L4.7,15.3" stroke-linecap="round"/></g>' },
+    { id: 'snowflakes', price: 10, size: 20, svg: '<g stroke="T" stroke-width="1.6" stroke-linecap="round"><path d="M10,3V17M3.9,6.5L16.1,13.5M3.9,13.5L16.1,6.5"/></g>' },
+    { id: 'zigzag', price: 10, size: 16, svg: '<path d="M0,5L4,1 8,5 12,1 16,5M0,13L4,9 8,13 12,9 16,13" fill="none" stroke="T" stroke-width="2" stroke-linejoin="round"/>' },
+    { id: 'moons', price: 10, size: 20, svg: '<path d="M12,4A6.5,6.5 0 1 0 15,15A5,5 0 1 1 12,4Z" fill="T"/>' },
+    { id: 'drops', price: 10, size: 18, svg: '<path d="M9,3C12,8 13,10 13,12A4,4 0 0 1 5,12C5,10 6,8 9,3Z" fill="T"/>' },
+    { id: 'triangles', price: 10, size: 16, svg: '<path d="M8,2L14,13H2Z" fill="T" fill-opacity=".7"/>' },
+    { id: 'rings', price: 10, size: 16, svg: '<circle cx="8" cy="8" r="4.5" fill="none" stroke="T" stroke-width="2"/>' },
+    { id: 'petals', price: 20, size: 20, svg: '<path d="M10,3C14,6 14,11 10,13C6,11 6,6 10,3Z" fill="T"/><path d="M3,15C6,13 9,14 10,17C7,18 4,18 3,15Z" fill="T" fill-opacity=".7"/>' },
   ];
   const byId = Object.fromEntries(P.map(p => [p.id, p]));
 

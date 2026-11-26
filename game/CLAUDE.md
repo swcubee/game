@@ -29,6 +29,7 @@ js/main.js            game flow, save data, paint jars, gallery, overlays, first
 js/meta.js            sugar stars and achievements (rules; main.js shows them)
 js/patterns.js        paint patterns (tone-on-tone tiles), starter set + shop prices; picture defaults
 js/shades.js          replacement shades (one family = one base paint) and the colour distinctness check
+js/decor.js           gallery frames and wallpapers (look in style.css: .frame.f-<id>, #gallery.w-<id>)
 js/sdk-adapter.js     the only file that talks to QSPlaySDK (safe wrappers + localStorage fallback)
 js/audio.js           synthesised WebAudio sounds (no audio files)
 js/i18n.js            UI strings (ru, en)
@@ -80,7 +81,12 @@ Free colouring (studio screen, opened by tapping a finished picture in the galle
 shade, plain or with any owned pattern, on any cell; no sorting, no distinctness rules. Save v5 adds `art`
 ({pictureId: {cellId: [hex, patternId|null]}}); the gallery shows the recoloured version, "reset" deletes it.
 SVG ids must be unique in the page: hidden screens keep their svgs and url(#id) into a hidden one draws nothing.
-Gallery frames and wall backgrounds are planned.
+Gallery decor (js/decor.js, 20 stars each): a frame per finished picture, chosen on the colouring screen (light wood is
+free), and one wallpaper for the gallery, chosen in the shop. Save v6 adds `decor` (bought ids), `frames`
+({pictureId: frameId}), `wall`.
+Economy (game designer, 26.11): patterns 10 (simple) / 20, shades 30-40, frames and wallpapers 20; a finished picture
+gives 15 + 2 x its number. Aim: over the current pictures the player can buy about half of the shop.
+First sugar-dust level shows a one-time hint (S.tut.dust) with a hand on a dusted flask until the first pour.
 
 ## Rules for changes
 - Keep it vanilla JS + classic scripts. No frameworks, no bundler, no npm runtime dependencies.

@@ -11,7 +11,8 @@
   // owned: patterns bought in the shop; pats: chosen pattern per colour for each picture id (save v3)
   // shades: replacement shades bought; tints: chosen shade id (or null) per colour for each picture id (save v4)
   // art: free colouring of finished pictures, {pictureId: {cellId: [hex, patternId|null]}} (save v5)
-  let S = { v: 5, level: 0, pic: 0, paint: [], painted: [], done: [], sound: true, tut: {}, stars: 0, ach: [], stats: {}, owned: [], pats: {}, shades: [], tints: {}, art: {} };
+  // decor: bought frames and wallpapers; frames: frame id per picture id; wall: gallery wallpaper (save v6)
+  let S = { v: 6, level: 0, pic: 0, paint: [], painted: [], done: [], sound: true, tut: {}, stars: 0, ach: [], stats: {}, owned: [], pats: {}, shades: [], tints: {}, art: {}, decor: [], frames: {}, wall: 'stripes' };
   const save = () => SDK.save(SAVE_KEY, S);
   // a picture with the player's shades applied: palette = colours now, base = the picture's own colours
   function dress(p) {
@@ -23,6 +24,7 @@
   const allDone = () => S.pic >= PICTURES.length;
   let sel = 0, screen = 'paint', overlayOpen = false;
   // patterns of a picture: the player's choice where valid, otherwise the starter set; never two colours with one pattern
+  const ownsDecor = id => { const d = Decor.get(id); return !!d && (!d.price || S.decor.includes(id)); };
   const ownsPattern = id => { const p = Patterns.get(id); return !!p && (!p.price || S.owned.includes(id)); };
   function patternsOf(p) {
     const def = Patterns.defaults(p), mine = S.pats[p.id] || [], out = [];
@@ -163,7 +165,7 @@
     Sound.unlock(); Sound.pick();
     S.tut.brewed = true; hand(null);
     go('sort');
-    requestAnimationFrame(() => SortScene.start(nextLevel(), picture().palette, { tutorial: S.level === 0, onWin, onLose }));
+    requestAnimationFrame(() => SortScene.start(nextLevel(), picture().palette, { tutorial: S.level === 0, onWin, onLose, dustHint: S.tut.dust ? null : () => { S.tut.dust = true; save(); } }));
   }
   function onWin(reward, info) {
     Sound.win();
@@ -183,10 +185,11 @@
   // ───── gallery ─────
   function renderGallery() {
     const b = $('board'); b.innerHTML = '';
+    $('gallery').className = 'screen' + (ownsDecor(S.wall) && S.wall !== 'stripes' ? ' w-' + S.wall : '');
     PICTURES.forEach((p0, i) => {
       const f = document.createElement('div'), p = dress(p0);
       if (S.done.includes(p.id)) {
-        f.className = 'frame done'; f.innerHTML = PaintScene.markup(p, 'all', { patterns: patternsOf(p) }) + `<span class="cap">${p.name[I18N.lang()] || p.name.en}</span>`;
+        f.className = 'frame done f-' + frameOf(p.id); f.innerHTML = PaintScene.markup(p, 'all', { patterns: patternsOf(p) }) + `<span class="cap">${p.name[I18N.lang()] || p.name.en}</span>`;
         applyArt(f.querySelector('svg'), p);
         f.addEventListener('click', () => { Sound.pick(); studio.pic = p0.id; go('studio'); });
       }
@@ -237,9 +240,14 @@
       const tag = state === 'on' ? CHECK : state === 'used' ? `<b class="tag-num">${usedBy + 1}</b>` : state === 'buy' ? `${STAR}${pt.price}` : '';
       h += `<button class="pat ${state}" data-id="${pt.id}"${state === 'used' ? ' disabled' : ''}>${swatch(pt.id, color)}<span class="pat-name">${t('pat_' + pt.id)}</span><span class="pat-tag">${tag}</span></button>`;
     }
+    h += `</div><h2>${t('shopWalls')}</h2><div class="shop-grid">` + Decor.walls.map(d => {
+      const state = (ownsDecor(S.wall) ? S.wall : 'stripes') === d.id ? 'on' : ownsDecor(d.id) ? 'own' : 'buy';
+      return `<button class="pat wall ${state}" data-wall="${d.id}"><span class="wall-tile w-${d.id}"></span><span class="pat-name">${t('decor_' + d.id)}</span><span class="pat-tag">${state === 'on' ? CHECK : state === 'buy' ? STAR + d.price : ''}</span></button>`;
+    }).join('');
     box.innerHTML = h + '</div>';
+    box.querySelectorAll('.pat.wall').forEach(b => b.addEventListener('click', () => pickDecor(b.dataset.wall, () => { S.wall = b.dataset.wall; }, renderShop)));
     box.querySelectorAll('.shop-paint').forEach(b => b.addEventListener('click', () => { Sound.pick(); shopSel = +b.dataset.c; renderShop(); }));
-    box.querySelectorAll('.pat:not(.shade)').forEach(b => b.addEventListener('click', () => pickPattern(b.dataset.id)));
+    box.querySelectorAll('.pat:not(.shade):not(.wall)').forEach(b => b.addEventListener('click', () => pickPattern(b.dataset.id)));
     box.querySelectorAll('.pat.shade').forEach(b => b.addEventListener('click', () => pickShade(b.dataset.shade)));
   }
   function pickPattern(id) {
@@ -298,10 +306,23 @@
       } else el.style.fill = hex;
     });
   }
+  const frameOf = id => ownsDecor(S.frames[id]) ? S.frames[id] : 'wood';
+  // buy a frame or a wallpaper (asks first), then apply it
+  function pickDecor(id, apply, rerender) {
+    const d = Decor.get(id);
+    if (!ownsDecor(id)) {
+      if (S.stars < d.price) { Sound.error(); note(`<h2>${t('notEnough')}</h2><p>${t('notEnoughText', { n: d.price - S.stars })}</p>`, [[t('ok'), closeNote]]); return; }
+      Sound.pick();
+      note(`<h2>${t('decor_' + id)}</h2><p>${t('buyDecorQ', { n: d.price })}</p>`,
+        [[t('buy'), () => { closeNote(); S.stars -= d.price; S.decor.push(id); apply(); save(); Sound.cork(); rerender(); }], [t('notNow'), closeNote]]);
+      return;
+    }
+    Sound.pick(); apply(); save(); rerender();
+  }
   function renderStudio() {
     const p = dress(PICTURES.find(x => x.id === studio.pic));
     const box = $('studio-pic');
-    box.innerHTML = PaintScene.markup(p, 'all', { patterns: patternsOf(p) }).replace(/(id="|url\(#)(pt|hatch)-/g, '$1st$2-');
+    box.innerHTML = `<div class="frame studio-frame f-${frameOf(p.id)}">` + PaintScene.markup(p, 'all', { patterns: patternsOf(p) }).replace(/(id="|url\(#)(pt|hatch)-/g, '$1st$2-') + '</div>';
     const svg = box.querySelector('svg');
     applyArt(svg, p);
     svg.querySelectorAll('path.cell').forEach(el => el.addEventListener('click', () => {
@@ -314,7 +335,9 @@
     $('studio-tools').innerHTML =
       `<div class="studio-row">` + colours.map(hex => `<button class="studio-chip${hex === studio.color ? ' sel' : ''}" data-hex="${hex}" style="background:${hex}" aria-label="${hex}"></button>`).join('') + '</div>' +
       `<div class="studio-row pats"><button class="studio-pat${!studio.pat ? ' sel' : ''}" data-pat="">${chip(studio.color)}</button>` +
-      pats.map(pt => `<button class="studio-pat${pt.id === studio.pat ? ' sel' : ''}" data-pat="${pt.id}" aria-label="${t('pat_' + pt.id)}">${swatch(pt.id, studio.color)}</button>`).join('') + '</div>';
+      pats.map(pt => `<button class="studio-pat${pt.id === studio.pat ? ' sel' : ''}" data-pat="${pt.id}" aria-label="${t('pat_' + pt.id)}">${swatch(pt.id, studio.color)}</button>`).join('') + '</div>' +
+      `<div class="studio-row frames">` + Decor.frames.map(d => `<button class="decor-chip${d.id === frameOf(studio.pic) ? ' sel' : ''}" data-frame="${d.id}" style="background:${d.swatch}" aria-label="${t('decor_' + d.id)}">${ownsDecor(d.id) ? '' : `<span class="price">${STAR}${d.price}</span>`}</button>`).join('') + '</div>';
+    $('studio-tools').querySelectorAll('.decor-chip').forEach(b => b.addEventListener('click', () => pickDecor(b.dataset.frame, () => { S.frames[studio.pic] = b.dataset.frame; }, renderStudio)));
     $('studio-tools').querySelectorAll('.studio-chip').forEach(b => b.addEventListener('click', () => { Sound.pick(); studio.color = b.dataset.hex; renderStudio(); }));
     $('studio-tools').querySelectorAll('.studio-pat').forEach(b => b.addEventListener('click', () => { Sound.pick(); studio.pat = b.dataset.pat || null; renderStudio(); }));
   }
@@ -392,7 +415,9 @@
     const saved = await SDK.load(SAVE_KEY);
     // v1 -> v2: Meta.init adds stars, achievements, stats; v2 -> v3: owned patterns and picture patterns (empty = defaults);
     // v3 -> v4: shades and picture shades (empty = the picture's own colours); v4 -> v5: free colouring (empty = none)
-    if (saved && [1, 2, 3, 4, 5].includes(saved.v)) S = Object.assign(S, saved, { v: 5 });
+    // v5 -> v6: gallery frames and wallpaper (empty = light wood frames on the striped wall)
+    if (saved && [1, 2, 3, 4, 5, 6].includes(saved.v)) S = Object.assign(S, saved, { v: 6 });
+    S.decor = S.decor || []; S.frames = S.frames || {}; S.wall = S.wall || 'stripes';
     S.owned = S.owned || []; S.pats = S.pats || {}; S.shades = S.shades || []; S.tints = S.tints || {}; S.art = S.art || {};
     S.tut = S.tut || {};
     Meta.init(S);                 // achievements already earned by an old save are granted quietly
