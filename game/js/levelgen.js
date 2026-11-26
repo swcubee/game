@@ -24,10 +24,14 @@
   }
   const mix = (...n) => n.reduce((h, x) => Math.imul(h ^ (x + 0x9e3779b9), 0x85ebca6b) >>> 0, SEED);
 
-  // difficulty of the n-th sort level of the game (0-based); level 1 is easy, a hard level is followed by an easy one
+  // difficulty of the n-th sort level of the game (0-based); level 1 is easy, levels 2-3 easy or medium,
+  // a hard level is followed by an easy one
   const tiers = ['E'], tierRand = rng(SEED);
   function tierAt(n) {
-    while (tiers.length <= n) tiers.push(tiers[tiers.length - 1] === 'H' ? 'E' : TIER_BAG[Math.floor(tierRand() * TIER_BAG.length)]);
+    while (tiers.length <= n) {
+      const bag = tiers.length < 3 ? TIER_BAG.filter(t => t !== 'H') : TIER_BAG;   // the first 3 levels of the game are never hard
+      tiers.push(tiers[tiers.length - 1] === 'H' ? 'E' : bag[Math.floor(tierRand() * bag.length)]);
+    }
     return tiers[n];
   }
 
@@ -43,7 +47,8 @@
     const colours = picture.palette.length;
     const need = needs(picture, earned);
     const tier = tierAt(n);
-    const k = Math.min(colours + Math.floor(picIndex / 3), MAX_PAINT_FLASKS, 2 * colours, kMax || Infinity);
+    // at most colours + 2 paint flasks below 8 colours (10 only with 8): bigger mixes are too slow for the solver
+    const k = Math.min(colours + Math.floor(picIndex / 3), colours >= 8 ? MAX_PAINT_FLASKS : colours + 2, 2 * colours, kMax || Infinity);
 
     // 1. which flasks: slot by slot the colour that still needs the most paint, at most two flasks of a colour;
     //    when nothing is needed any more, a filler flask (gives no paint, labelled "enough") of a colour seen least

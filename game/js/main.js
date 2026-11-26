@@ -7,7 +7,8 @@
   // ───── state ─────
   // level: index of the next sort level; pic: picture being painted;
   // paint: units of paint per colour of the current picture (1 picture = 1 palette)
-  let S = { v: 1, level: 0, pic: 0, paint: [], painted: [], done: [], sound: true, tut: {} };
+  // stars, ach, stats: sugar stars and achievements (js/meta.js), added in save v2
+  let S = { v: 2, level: 0, pic: 0, paint: [], painted: [], done: [], sound: true, tut: {}, stars: 0, ach: [], stats: {} };
   const save = () => SDK.save(SAVE_KEY, S);
   const picture = () => PICTURES[Math.min(S.pic, PICTURES.length - 1)];
   const allDone = () => S.pic >= PICTURES.length;
@@ -39,10 +40,29 @@
       <path d="M9,6.5C9,4.5 10.5,3 12.5,3H41.5C43.5,3 45,4.5 45,6.5V15C45,17 43.5,18.5 41.5,18.5H12.5C10.5,18.5 9,17 9,15Z" fill="#4a3150" stroke="#2a1b2f" stroke-width="1.6"/>
       <text x="27" y="11.5" text-anchor="middle" dominant-baseline="central" font-family="Nunito" font-weight="900" font-size="12" fill="#f3e6cf">${num}</text></svg>`;
   }
+  const STAR = '<svg class="star-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12,2.6L14.7,8.6 21.2,9.2 16.3,13.5 17.8,19.9 12,16.5 6.2,19.9 7.7,13.5 2.8,9.2 9.3,8.6Z"/></svg>';
   const CHECK = '<svg viewBox="0 0 20 14" width="18" height="13" style="vertical-align:-1px"><path d="M2,7.5L7.2,12 18,2" fill="none" stroke="#3f6b2a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
   function jarLevel(paint) { return paint <= 0 ? 0.05 : Math.min(1, 0.22 + paint / 14); }
 
+  function renderStars() { $('stars-n').textContent = S.stars; }
+  // the stars just earned, line by line, for a result note
+  const earnHTML = res => `<div class="earn">${res.lines.map(([k, n]) => `<span>${STAR}+${n} ${t('earn_' + k)}</span>`).join('')}</div>`;
+  // achievements: a paper slip at the top of the screen, one after another
+  const toastQueue = [];
+  function toasts(list) {
+    list.forEach(a => toastQueue.push(a)); renderStars();
+    if (toastQueue.length === list.length && list.length) nextToast();
+  }
+  function nextToast() {
+    const a = toastQueue[0]; if (!a) return;
+    const el = document.createElement('div'); el.className = 'toast';
+    el.innerHTML = `<small>${t('achGot')}</small><b>${t('ach_' + a.id)}</b><span>${STAR}+${a.stars}</span>`;
+    $('toasts').appendChild(el); Sound.cork();
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => { el.remove(); toastQueue.shift(); nextToast(); }, 400); }, 2600);
+  }
+
   function renderJars() {
+    renderStars();
     const p = picture(), box = $('jars');
     box.innerHTML = '';
     p.palette.forEach((color, c) => {
@@ -92,6 +112,7 @@
       return;
     }
     S.paint[c]--; S.painted.push(id);
+    toasts(Meta.cellPainted());
     PaintScene.fill(id, at); Sound.fill();
     S.tut.painted = true;
     if (need(c) === 0) autoSelect(), PaintScene.select(sel);
@@ -104,11 +125,14 @@
     hand(null);
     PaintScene.alive(true); Sound.picture();
     if (!S.done.includes(p.id)) S.done.push(p.id);
+    const leftover = S.paint.reduce((a, n) => a + (n || 0), 0);   // unused paint turns into stars
+    const res = Meta.pictureDone(S.pic + 1, leftover);
     S.pic++; S.paint = []; S.painted = [];
     save();
     setTimeout(() => {
       const last = allDone();
-      note(`<h2>${t('picDone')}</h2><p>${p.name[I18N.lang()] || p.name.en}</p>`,
+      renderStars(); toasts(res.ach);
+      note(`<h2>${t('picDone')}</h2><p>${p.name[I18N.lang()] || p.name.en}</p>${earnHTML(res)}`,
         [[last ? t('toGallery') : t('next'), () => { closeNote(); last ? go('gallery') : showPaint(); }]]);
     }, 2200);
   }
@@ -121,15 +145,18 @@
     go('sort');
     requestAnimationFrame(() => SortScene.start(nextLevel(), picture().palette, { tutorial: S.level === 0, onWin, onLose }));
   }
-  function onWin(reward) {
+  function onWin(reward, info) {
     Sound.win();
     reward.forEach((r, c) => { S.paint[c] = (S.paint[c] || 0) + r; });
+    const res = Meta.levelWon(info);
     S.level++; save(); SDK.reportLevel(S.level);
     const loot = reward.map((r, c) => r ? `<div class="jar">${jarSVG(picture().palette[c], c + 1, jarLevel(r))}<span class="count">+${r}</span></div>` : '').join('');
-    note(`<h2>${t('winTitle')}</h2><p>${t('winText')}</p><div class="loot">${loot}</div>`, [[t('toPaint'), () => { closeNote(); showPaint(); }]]);
+    note(`<h2>${t('winTitle')}</h2><p>${t('winText')}</p><div class="loot">${loot}</div>${earnHTML(res)}`, [[t('toPaint'), () => { closeNote(); showPaint(); }]]);
+    toasts(res.ach);
   }
   function onLose(reason) {
     Sound.lose();
+    Meta.levelLost(); save();
     note(`<h2>${t('loseTitle')}</h2><p>${t(reason === 'moves' ? 'loseMoves' : 'loseText')}</p>`, [[t('retry'), () => { closeNote(); SortScene.restart(); }]]);
   }
 
@@ -144,6 +171,11 @@
       b.appendChild(f);
     });
     if (allDone()) b.insertAdjacentHTML('beforeend', `<p class="soon">${t('soon')}</p>`);
+    // achievements album: what each one asks for and gives, earned ones ticked
+    const al = document.createElement('div'); al.className = 'album';
+    al.innerHTML = `<h2>${t('achTitle')}</h2>` + Meta.list().map(a => `<div class="ach${Meta.has(a.id) ? ' got' : ''}">
+      <i>${Meta.has(a.id) ? CHECK : STAR}</i><b>${t('ach_' + a.id)}</b><small>${t('achDo_' + a.id)}</small><span>+${a.stars}</span></div>`).join('');
+    b.appendChild(al);
   }
 
   // ───── note overlay ─────
@@ -209,8 +241,9 @@
     const cfg = await SDK.config();
     I18N.setLocale(cfg.locale); I18N.apply();
     const saved = await SDK.load(SAVE_KEY);
-    if (saved && saved.v === 1) S = Object.assign(S, saved);
+    if (saved && (saved.v === 1 || saved.v === 2)) S = Object.assign(S, saved, { v: 2 });   // v1 -> v2: Meta.init adds stars, achievements, stats
     S.tut = S.tut || {};
+    Meta.init(S);                 // achievements already earned by an old save are granted quietly
     Sound.setOn(S.sound); $('btn-sound').classList.toggle('off', !S.sound);
     bind();
     try { await document.fonts.ready; } catch (e) { /* fonts optional */ }

@@ -33,7 +33,7 @@ jobs:
         run: python tools/playtest.py out/phone 390 844 4
 
       - name: Play-through of all levels on a desktop screen
-        run: python tools/playtest.py out/desktop 1280 720 14
+        run: python tools/playtest.py out/desktop 1280 720 99
 
       - name: Screenshots
         if: always()
