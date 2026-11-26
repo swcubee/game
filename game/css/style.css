@@ -313,3 +313,22 @@ button:focus-visible { outline-color: var(--ink); }
 .buy-swatch svg { width: 96px; height: 96px; }
 .pat .pat-tag svg { width: 16px; height: 16px; }
 .pat .clash { font: 400 13px/1 'Pangolin', sans-serif; }
+
+/* free colouring (studio) */
+.studio-pic { min-height: 0; display: flex; justify-content: center; align-items: center; padding: 6px 16px; }
+.studio-pic svg { height: 100%; max-width: 100%; background: var(--paper); border-radius: 3px; box-shadow: 0 6px 18px rgba(107, 74, 90, .18); }
+.studio-pic .cell { cursor: pointer; }
+.studio-tools { padding: 8px 12px 14px; display: grid; gap: 8px; }
+.studio-row { display: flex; gap: 8px; overflow-x: auto; padding: 4px 2px 6px; scrollbar-width: none; }
+.studio-row::-webkit-scrollbar { display: none; }
+.studio-chip { flex: none; width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--milk); box-shadow: 0 3px 0 rgba(107, 74, 90, .25); }
+.studio-chip.sel { border-color: var(--ink); transform: translateY(-2px); }
+.studio-pat { flex: none; width: 46px; height: 46px; padding: 0; border-radius: 12px; background: var(--milk); border: 3px solid transparent; box-shadow: 0 3px 0 rgba(107, 74, 90, .2); }
+.studio-pat svg { width: 100%; height: 100%; display: block; }
+.studio-pat.sel { border-color: var(--ink); }
+.gallery-tip { width: 100%; text-align: center; font-size: 16px; color: #9a7f8c; margin: 0 0 4px; }
+.frame.done { cursor: pointer; }
+.studio-pic svg * { pointer-events: none; }
+.studio-pic svg .cell { pointer-events: auto; }
+.studio-row > :first-child { margin-left: auto; }
+.studio-row > :last-child { margin-right: auto; }

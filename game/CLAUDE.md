@@ -75,7 +75,12 @@ Shades (js/shades.js) are bought for stars and replace a paint of their family i
 offered only if CIE76 delta E >= 12 to every other paint of the picture, for normal vision and simulated protanopia,
 deuteranopia and tritanopia; a shade should differ from its own base by delta E >= 15 (game designer). Save v4 adds
 `shades` (bought ids) and `tints` ({pictureId: [shadeId|null per colour]}); main.js picture() returns the picture with
-shades applied (`palette` = colours now, `base` = the picture's own). Gallery frames and free colouring are planned.
+shades applied (`palette` = colours now, `base` = the picture's own).
+Free colouring (studio screen, opened by tapping a finished picture in the gallery): any of the 9 Zefir paints or a bought
+shade, plain or with any owned pattern, on any cell; no sorting, no distinctness rules. Save v5 adds `art`
+({pictureId: {cellId: [hex, patternId|null]}}); the gallery shows the recoloured version, "reset" deletes it.
+SVG ids must be unique in the page: hidden screens keep their svgs and url(#id) into a hidden one draws nothing.
+Gallery frames and wall backgrounds are planned.
 
 ## Rules for changes
 - Keep it vanilla JS + classic scripts. No frameworks, no bundler, no npm runtime dependencies.
