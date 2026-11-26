@@ -46,7 +46,8 @@ game/                      игра целиком (это и есть сбор�
   js/sdk-adapter.js        ЕДИНСТВЕННЫЙ файл, который обращается к QSPlaySDK
   js/audio.js              звуки через WebAudio
   js/i18n.js               тексты интерфейса (ru, en)
-  js/pictures.js           СГЕНЕРИРОВАН из tools/build-pictures.mjs, руками не править
+  pictures/*.json          картины, по файлу на картину, порядок игры = порядок имён файлов (по росту числа клеток)
+  js/pictures.js           СГЕНЕРИРОВАН из pictures/*.json скриптом tools/build-pictures.mjs, руками не править
   js/levelgen.js           собирает каждый уровень сортировки прямо в игре
   js/level-pool.js         СГЕНЕРИРОВАН из tools/build-level-pool.mjs (банк проверенных раскладок), руками не править
   tools/                   генераторы картин и уровней, солвер, автопрохождение, проверка номеров
