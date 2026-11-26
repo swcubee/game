@@ -54,7 +54,7 @@ button:focus-visible { outline: 3px dashed var(--candle); outline-offset: 3px; b
   box-shadow: 0 1px 0 #d9ccb6, 0 3px 0 #c9b99f, 0 22px 34px -14px rgba(0,0,0,.7); }
 .sheet::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 3px;
   background: radial-gradient(120% 90% at 30% 20%, transparent 60%, rgba(120,90,60,.10)); }
-.tape { position: absolute; width: 74px; height: 22px; background: rgba(233,214,170,.78); z-index: 3;
+.tape { position: absolute; width: 74px; height: 22px; background: rgba(233,214,170,.78); z-index: 3; pointer-events: none;
   box-shadow: 0 1px 2px rgba(0,0,0,.15); clip-path: polygon(3% 0, 97% 6%, 100% 50%, 96% 100%, 2% 94%, 0 45%); }
 .tape.tl { left: -18px; top: 10px; transform: rotate(-38deg); }
 .tape.tr { right: -16px; top: 8px; transform: rotate(33deg); background: rgba(196,214,170,.75); }

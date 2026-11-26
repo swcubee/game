@@ -28,7 +28,8 @@
     for (let i = 0; i < s.length; i++) for (let j = 0; j < s.length; j++) if (useful(s[i], s[j])) m.push([i, j]);
     return m;
   }
-  const key = s => s.map(t => t.join(',')).join('|');
+  // flask order does not matter for solving: states that differ only by order count as one
+  const key = s => s.map(t => t.join(',')).sort().join('|');
   // shortest solution from a state (used for the tutorial hand); small levels only
   function solvePath(start, limit = 60000) {
     if (solved(start)) return [];
