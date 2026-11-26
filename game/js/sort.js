@@ -182,7 +182,11 @@
       stream.style.transition = 'opacity .11s'; stream.style.opacity = '0'; await wait(120);
       stream.remove(); stream = null;
       paintFlask(a); paintFlask(b);
-      if (revealed) { const l = A.el.querySelectorAll('.layer'); l[l.length - 1].animate([{ filter: 'brightness(2)' }, { filter: 'none' }], { duration: 500 }); }
+      if (revealed) {                        // the sugar cloud on the new top layer goes "poof"
+        const l = A.el.querySelectorAll('.layer'), top = l[l.length - 1];
+        top.animate([{ filter: 'brightness(1.6) saturate(.4)', transform: 'scale(1.06)' }, { filter: 'none', transform: 'none' }], { duration: 450, easing: 'ease-out' });
+        puff(A.x + w / 2, A.y + (IN.y / VB_H) * h + IN.h / VB_H * h - ta.length * layerH);
+      }
       await move(A.el, pose(a), 260);
     } catch (e) {
       console.warn('[sort] animation', e);
@@ -209,6 +213,15 @@
     $('shelves').appendChild(tag);
     setTimeout(() => tag.remove(), 1400);
     sparkles(f.x + st.geo.w / 2, f.y + 4, st.palette[c]);
+  }
+  function puff(x, y) {
+    for (let k = 0; k < 7; k++) {
+      const s = document.createElement('i'), a = Math.PI * 2 * k / 7 + Math.random() * .4, d = 14 + Math.random() * 14;
+      s.className = 'sparkle puff';
+      Object.assign(s.style, { left: x + 'px', top: y + 'px' });
+      s.style.setProperty('--dx', Math.cos(a) * d + 'px'); s.style.setProperty('--dy', Math.sin(a) * d + 'px');
+      $('shelves').appendChild(s); setTimeout(() => s.remove(), 750);
+    }
   }
   function sparkles(x, y, color) {
     for (let k = 0; k < 9; k++) {

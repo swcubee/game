@@ -80,14 +80,16 @@
       else if (empties === 1) return build(n, picture, picIndex, earned, true, kMax);   // no fair layout with one empty flask
       pick = band[Math.floor(rand() * band.length)];
     }
+    // sugar cloud (hidden layers): hard levels from picture 3, half of the medium ones from picture 8 (design, 26.11)
+    const veiled = (tier === 'H' && picIndex >= 2) || (tier === 'M' && picIndex >= 7 && rand() < 0.5);
     const tubes = shuffle(pick.t.split(',').map(f => [...f].map(ch => label[+ch])));
     for (let e = 0; e < empties; e++) tubes.push([]);
     return {
       n: n + 1, pic: picIndex, tier, tubes,
       reward: paid.map(p => p * PAINT_PER_FLASK),
-      hidden: picIndex >= 2 && tier !== 'E' ? 2 : 0,                // "cobweb": bottom layers stay hidden until reached
+      hidden: veiled ? 3 : 0,                                        // sugar cloud: all but the top layer hidden until reached
       minMoves: pick.m,
-      moves: n === 0 ? 0 : moveLimit(tier, pick.m),                 // 0 = no limit (tutorial)
+      moves: n === 0 ? 0 : moveLimit(tier, pick.m) + (veiled ? 2 : 0),   // 0 = no limit (tutorial); +2 to explore
     };
   }
   window.LevelGen = { build, needs, tierAt };
