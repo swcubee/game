@@ -24,7 +24,7 @@
     const tubes = level.tubes.map(t => t.slice());
     const hidden = tubes.map(t => t.map((_, i) => level.hidden > 0 && i < Math.min(level.hidden, t.length - 1)));
     st = { level, palette, cb, tubes, hidden, corked: tubes.map(R.isDone), paid: level.reward.map(r => r / 2),
-      undos: UNDOS, history: [], sel: null, busy: false, moves: 0, limit: level.moves || Infinity, flasks: [], geo: null, over: false };
+      undos: UNDOS, history: [], sel: null, busy: false, moves: 0, limit: level.moves || Infinity, flasks: [], geo: null, over: false, ending: false };
     st.initial = snapshot();
     $('level-name').textContent = I18N.t('level', { n: level.n });
     hideHint();
@@ -224,20 +224,28 @@
     hideHint();
     $('btn-undo').classList.remove('urge');
     if (R.solved(st.tubes)) {
-      st.over = true; hand(null);
-      setTimeout(() => st.cb.onWin(st.level.reward), 1100);
+      hand(null);
+      finish(1100, cb => cb.onWin(st.level.reward));
       return;
     }
     if (st.moves >= st.limit) {               // out of moves and the paint is not sorted: the level is lost
-      st.over = true; hand(null);
-      setTimeout(() => st.cb.onLose('moves'), 450);
+      hand(null);
+      finish(450, cb => cb.onLose('moves'));
       return;
     }
     if (!R.usefulMoves(st.tubes).length) {
       if (st.undos > 0) { showHint(I18N.t('noMoves')); $('btn-undo').classList.add('urge'); }
-      else { st.over = true; setTimeout(() => st.cb.onLose('stuck'), 450); }
+      else finish(450, cb => cb.onLose('stuck'));
     }
     tutorial();
+  }
+
+  // the level is over; the result is reported after a short pause. Until then the player cannot leave or restart,
+  // and if the scene was stopped anyway the stale timer does nothing.
+  function finish(ms, report) {
+    const me = st;
+    st.over = true; st.ending = true;
+    setTimeout(() => { if (st !== me) return; st.ending = false; report(st.cb); }, ms);
   }
 
   function undo() {
@@ -250,7 +258,7 @@
     tutorial();
   }
   function restart() {
-    if (!st || st.busy) return;
+    if (!st || st.busy || st.ending) return;
     restore(st.initial);
     st.undos = UNDOS; st.history = []; st.sel = null; st.moves = 0; st.over = false; updateMoves();
     st.flasks.forEach((f, i) => { f.el.classList.toggle('closed', st.corked[i]); f.el.classList.remove('up'); place(i); paintFlask(i); });
@@ -292,6 +300,7 @@
     start, undo, restart,
     relayout() { if (st && !st.busy) { layout(); tutorial(); } },
     stop() { hand(null); st = null; },
+    locked: () => !!(st && (st.busy || st.ending)),   // a pour or the end-of-level pause is in progress
     __busy: () => !!(st && st.busy),
     __solution() { return st ? Rules.solvePath(st.tubes, 400000) : null; },
   };
