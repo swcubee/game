@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Spooky Paint - Color Sort</title>
+<!-- QS Play SDK: must load before the game code. Outside the portal iframe it runs in mock mode. -->
+<script src="https://sdk.quartsoft.com/v1/sdk.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="game">
+  <div class="backdrop" aria-hidden="true">
+    <div class="candle-glow"></div>
+    <svg class="window" viewBox="0 0 200 260">
+      <path d="M20,258V100C20,46 56,12 100,12C144,12 180,46 180,100V258Z" fill="#1b2346"/>
+      <circle cx="132" cy="82" r="26" fill="#f6e2a0"/>
+      <circle cx="122" cy="76" r="4" fill="#e8cf86"/><circle cx="140" cy="94" r="3" fill="#e8cf86"/>
+      <circle cx="52" cy="70" r="1.6" fill="#f6e7b4"/><circle cx="78" cy="44" r="1.2" fill="#f6e7b4"/><circle cx="64" cy="132" r="1.4" fill="#f6e7b4"/><circle cx="160" cy="150" r="1.2" fill="#f6e7b4"/>
+      <path d="M20,212C60,196 92,206 120,198C148,190 168,200 180,196V258H20Z" fill="#12182f"/>
+      <path d="M100,12V258M20,150H180" stroke="#3b2647" stroke-width="7"/>
+      <path d="M20,258V100C20,46 56,12 100,12C144,12 180,46 180,100V258" fill="none" stroke="#3b2647" stroke-width="10"/>
+    </svg>
+  </div>
+
+  <!-- PAINT: the picture and the paint jars -->
+  <section id="paint" class="screen">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-gallery" aria-label="Gallery">
+        <svg viewBox="0 0 32 32"><path d="M6,7.5C11,6.8 21,6.6 26.2,7.2L25.6,25.4C20,25.9 11.5,26 6.4,25.2Z"/><path d="M9.5,21.5L14,15.6 17.4,19.4 19.8,16.6 23,21.8"/><circle cx="20.6" cy="11.8" r="1.7"/></svg>
+      </button>
+      <span class="spacer"></span>
+      <button class="icon-btn" id="btn-sound" aria-label="Sound">
+        <svg viewBox="0 0 32 32"><path class="spk" d="M6,12.6H10.4L16.4,7.2V24.8L10.4,19.4H6Z"/><path class="wave" d="M20.4,11.6C22.6,13.6 22.6,18.4 20.4,20.4M23.6,8.6C27.6,12.6 27.6,19.4 23.6,23.4"/><path class="mute" d="M20.6,12.4L27,19.6M27,12.4L20.6,19.6"/></svg>
+      </button>
+    </header>
+    <div class="easel">
+      <div class="sheet" id="sheet">
+        <span class="tape tl"></span><span class="tape tr"></span>
+        <div class="viewport" id="pic-viewport"></div>
+      </div>
+    </div>
+    <div class="tray">
+      <div class="jars" id="jars"></div>
+      <button class="brew" id="btn-brew">
+        <svg viewBox="0 0 48 44" aria-hidden="true"><path class="pot" d="M6,17C5,30 12,40 24,40C36,40 43,30 42,17Z"/><ellipse class="rim" cx="24" cy="17" rx="20" ry="4.6"/><ellipse class="brewliq" cx="24" cy="16.6" rx="16.4" ry="2.8"/><circle class="bub" cx="19" cy="10" r="2.4"/><circle class="bub" cx="27.5" cy="6.5" r="1.8"/><path class="leg" d="M13,38L11,43M35,38L37,43"/></svg>
+        <span data-i18n="brew">Смешать краски</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- SORT: the flasks on the shelves -->
+  <section id="sort" class="screen hidden">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-back" aria-label="Back">
+        <svg viewBox="0 0 32 32"><path d="M19.6,7.4L10.4,16.2 19.8,24.8"/></svg>
+      </button>
+      <div class="level-title"><span id="level-name"></span></div>
+      <button class="icon-btn" id="btn-restart" aria-label="Restart">
+        <svg viewBox="0 0 32 32"><path d="M24.6,17.4C24.2,22.4 20.4,25.6 15.8,25.4C11,25.2 7.4,21.2 7.6,16.4C7.8,11.4 12,7.8 16.6,8.2C19.4,8.4 21.6,9.8 23,12"/><path d="M23.8,6.6L23.4,12.6 17.6,12"/></svg>
+      </button>
+    </header>
+    <div class="shelves" id="shelves"></div>
+    <div class="hint hidden" id="sort-hint"></div>
+    <div class="bottombar">
+      <div class="moves hidden" id="moves"><span data-i18n="moves">Ходы</span><b id="moves-left"></b></div>
+      <button class="undo" id="btn-undo" aria-label="Undo">
+        <svg viewBox="0 0 32 32"><path d="M9.6,13.4H19.4C23.2,13.4 25.8,16 25.8,19.4C25.8,22.8 23.2,25.4 19.4,25.4H14"/><path d="M14,8.4L8.8,13.4 14,18.4"/></svg>
+        <span class="pips" id="undo-pips"><i></i><i></i></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- GALLERY -->
+  <section id="gallery" class="screen hidden">
+    <header class="topbar">
+      <button class="icon-btn" id="btn-gallery-back" aria-label="Back">
+        <svg viewBox="0 0 32 32"><path d="M19.6,7.4L10.4,16.2 19.8,24.8"/></svg>
+      </button>
+      <h1 class="screen-title" data-i18n="gallery">Галерея</h1>
+      <span class="icon-btn ghost"></span>
+    </header>
+    <div class="board" id="board"></div>
+  </section>
+
+  <!-- Overlays -->
+  <div class="overlay hidden" id="overlay">
+    <div class="note" id="note"></div>
+  </div>
+  <div class="hand hidden" id="hand" aria-hidden="true">
+    <svg viewBox="0 0 48 56"><path d="M17,28V9.5C17,6.6 21.4,6.6 21.4,9.5V24.5V21C21.4,18.2 25.8,18.2 25.8,21V25V22.6C25.8,19.8 30.2,19.8 30.2,22.6V26.6V24.6C30.2,22 34.4,22 34.4,24.6V35C34.4,44 29.4,50 22.6,50C16.4,50 13.6,46.6 10.6,41L6.2,32.8C4.8,30.2 8.2,27.8 10.4,30L17,36.4"/></svg>
+  </div>
+</div>
+
+<script src="js/pictures.js"></script>
+<script src="js/levels.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/sdk-adapter.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/rules.js"></script>
+<script src="js/sort.js"></script>
+<script src="js/paint.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

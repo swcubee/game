@@ -1,0 +1,6 @@
+* text=auto eol=lf
+*.woff2 binary
+*.png binary
+# generated data: keep diffs out of reviews
+js/levels.js linguist-generated=true -diff
+js/pictures.js linguist-generated=true -diff

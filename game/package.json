@@ -1,0 +1,13 @@
+{
+  "name": "spooky-paint",
+  "version": "0.1.0",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "description": "Spooky Paint - Color Sort: Halloween paint-by-number fed by water-sort levels (QS Play prototype)",
+  "scripts": {
+    "pictures": "node tools/build-pictures.mjs",
+    "levels": "node tools/generate-levels.mjs",
+    "data": "node tools/build-pictures.mjs && node tools/generate-levels.mjs",
+    "preview": "node tools/build-single.mjs"
+  }
+}
