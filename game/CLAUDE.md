@@ -26,7 +26,8 @@ js/rules.js           water sort rules; the pool builder loads this same file, s
 js/sort.js            sort level scene (flasks, pour animation, undo, win/lose)
 js/paint.js           picture scene (cells, numbers, hatch highlight, zoom/pan, "alive" animation)
 js/main.js            game flow, save data, paint jars, gallery, overlays, first-time hints
-js/meta.js            sugar stars and achievements (rules; main.js shows them), save v2
+js/meta.js            sugar stars and achievements (rules; main.js shows them)
+js/patterns.js        paint patterns (tone-on-tone tiles), starter set + shop prices; picture defaults
 js/sdk-adapter.js     the only file that talks to QSPlaySDK (safe wrappers + localStorage fallback)
 js/audio.js           synthesised WebAudio sounds (no audio files)
 js/i18n.js            UI strings (ru, en)
@@ -39,7 +40,7 @@ fonts/                Pangolin (words) and Nunito 900 (numbers), OFL licensed
 .github/workflows/    CI (manual only, run on request): regenerated data must match the commit, label check, playtest on two screens
 ```
 The portal build is the game folder itself (index.html, css, js, fonts); CI uploads it as an artifact.
-Playable link for the product owner (private claude.ai artifact, free): https://claude.ai/artifact/YCVoXoFWrDiVNt3YJU6n9i
+Playable link for the product owner (private claude.ai artifact, free): https://claude.ai/artifact/GQSeYBbzX9LCFjxMp4Rwtw
 After every change pushed to main, republish the game folder to that same URL (Artifact tool, `url` set to it,
 index.html as the page plus css/, js/ and fonts/*.woff2 as files) so the link always shows the current version.
 
@@ -62,6 +63,13 @@ There is no level list. When the player brews, js/levelgen.js builds the level f
 the picture still needs. Templates come from js/level-pool.js, keyed "k-d-e" (paint flasks, colours, empty flasks);
 labels are mapped to the picture's colours and flasks shuffled. Adding a picture needs no level work. Growth curve and
 numbers: /mnt/project-files/design/progression.md (game designer).
+
+## Patterns and the shop
+Each paint of a picture has a pattern (js/patterns.js), drawn tone-on-tone on its jar and on the picture's main object
+of that colour (the biggest cell plus same-colour cells touching it; paint.js mainCells). Patterns never repeat inside one
+picture. 12 starter patterns are free; 12 more are bought in the shop for sugar stars (shop button in the paint topbar).
+Save v3 adds `owned` (bought pattern ids) and `pats` ({pictureId: [patternId per colour]}); missing choices fall back to
+Patterns.defaults(picture). Shades, gallery frames and free colouring are planned (design/meta-rewards.md).
 
 ## Rules for changes
 - Keep it vanilla JS + classic scripts. No frameworks, no bundler, no npm runtime dependencies.
