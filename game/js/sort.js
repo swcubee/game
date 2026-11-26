@@ -303,6 +303,6 @@
     stop() { hand(null); st = null; },
     locked: () => !!(st && (st.busy || st.ending)),   // a pour or the end-of-level pause is in progress
     __busy: () => !!(st && st.busy),
-    __solution() { return st ? Rules.solvePath(st.tubes, 400000) : null; },
+    __solution(limit = 400000) { return st ? Rules.solvePath(st.tubes, limit) : null; },   // playtest only
   };
 })();

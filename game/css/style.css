@@ -277,3 +277,7 @@ button:focus-visible { outline-color: var(--ink); }
 .note p { color: #8a6f7c; }
 .float-tag.enough { background: #efe2d6; color: #8a6f7c; }
 .hand svg { filter: drop-shadow(0 4px 3px rgba(107,74,90,.3)); }
+.stars { background: var(--milk); box-shadow: 0 4px 0 var(--shade); }
+.ach { background: #efe0e8; color: #9a7f8c; }
+.ach:not(.got) i .star-ico path { stroke: #b9a1ae; }
+.toast small { color: #9a7f8c; }
