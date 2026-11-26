@@ -18,7 +18,7 @@ failed = False
 
 def solve_level(pg):
     # one solver run per level (in-page BFS per move is slow and memory hungry), then replay the moves
-    path = pg.evaluate("SortScene.__solution()")
+    path = pg.evaluate("SortScene.__solution(3000000)")
     if not path:
         return False
     fl = pg.locator('#shelves .flask')
